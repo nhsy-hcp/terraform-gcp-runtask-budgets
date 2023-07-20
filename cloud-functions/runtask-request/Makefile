@@ -1,12 +1,8 @@
 PROJECT = $(CURDIR)
 
-all: build
+all: run
 
-.PHONY: clean build run docker testing
-
-clean:
-	rm -rf build
-	rm -rf site-packages
+.PHONY: build run docker test test-remote hmac
 
 build:
 	pack build \

@@ -1,11 +1,8 @@
 PROJECT = $(CURDIR)
 
-all: build
+all: run
 
-.PHONY: clean build run docker testing
-
-clean:
-	rm -rf build
+.PHONY: build run docker test test-remote
 
 build:
 	pack build \
@@ -28,6 +25,3 @@ test-remote:
 		-X POST -H 'Content-Type: application/json' \
 		-H "Authorization: Bearer $(TOKEN)" \
 		-d @testing/data.json
-
-hmac:
-	cat  testing/data.json | openssl dgst -sha512 -hmac "secret"
