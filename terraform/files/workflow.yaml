@@ -1,12 +1,14 @@
 main:
     params: [input]
     steps:
-
-    - wimi:
-        call: http.get
+    - process:
+        call: http.post
         args:
-            url: https://ipinfo.io/ip
-        result: wimi_result
+            url: ${process_url}
+            body: $${input}
+            auth:
+                type: OIDC
+        result: process_result
         next: callback
 
     - callback:
@@ -15,9 +17,7 @@ main:
             url: ${callback_url}
             body:
                 task: $${input}
-                result:
-                    message: $${"Tests completed successfully from IP address " + wimi_result.body}
-                    status: "passed"
+                result: $${process_result.body}
             auth:
                 type: OIDC
         result: callback_result

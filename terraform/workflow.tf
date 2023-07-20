@@ -6,6 +6,7 @@ resource "google_workflows_workflow" "runtask-budgets" {
   source_contents = templatefile("${path.module}/files/workflow.yaml",
     {
       "callback_url" = google_cloudfunctions2_function.runtask_callback.url
+      "process_url"  = google_cloudfunctions2_function.runtask_process.url
     }
   )
 }
