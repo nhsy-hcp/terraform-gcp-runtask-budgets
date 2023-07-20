@@ -92,7 +92,7 @@ def request_handler(request):
                 signature = headers['x-tfc-task-signature']
                 # Need to use request.get_data() for hmac digest
                 if __validate_hmac(HMAC_KEY, request.get_data(), signature):
-                    __execute_workflow(detail=payload)
+                    __execute_workflow(payload)
                     msg = "OK"
                     status = 200
                 else:
@@ -165,7 +165,7 @@ def __validate_hmac(key: str, payload: str, signature: str) -> bool:
     return result
 
 
-def __execute_workflow(detail: dict, project: str = RUNTASK_PROJECT, location: str = RUNTASK_REGION, workflow: str = RUNTASK_WORKFLOW) -> Execution:
+def __execute_workflow(payload: dict, project: str = RUNTASK_PROJECT, location: str = RUNTASK_REGION, workflow: str = RUNTASK_WORKFLOW) -> Execution:
     """Execute a workflow and print the execution results.
 
     A workflow consists of a series of steps described using the Workflows syntax, and can be written in either YAML or JSON.
@@ -179,13 +179,7 @@ def __execute_workflow(detail: dict, project: str = RUNTASK_PROJECT, location: s
         The execution response.
     """
 
-    arguments = {
-        "detail": detail,
-        "result": {
-            "message": "Tested passed",
-            "status": "passed"
-        }
-    }
+    arguments = payload
 
     execution = Execution(argument=json.dumps(arguments))
 
