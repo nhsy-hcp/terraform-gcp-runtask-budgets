@@ -1,0 +1,33 @@
+PROJECT = $(CURDIR)
+
+all: build
+
+.PHONY: clean build run docker testing
+
+clean:
+	rm -rf build
+
+build:
+	pack build \
+	 --builder gcr.io/buildpacks/builder:v1 \
+	 --env GOOGLE_FUNCTION_SIGNATURE_TYPE=http \
+	 --env GOOGLE_FUNCTION_TARGET=callback_handler \
+	 runtask_callback
+
+run:
+	DISABLE_REMOTE_LOGGING=1 HMAC_KEY=secret functions-framework --target callback_handler --debug
+
+docker:
+	docker run --rm -p 8080:8080 runtask_callback
+
+test:
+	curl http://127.0.0.1:8080 -w "%{http_code}" -X POST -H 'Content-Type: application/json' -d @testing/data.json
+
+test-remote:
+	curl $(URL) -w "%{http_code}" \
+		-X POST -H 'Content-Type: application/json' \
+		-H "Authorization: Bearer $(TOKEN)" \
+		-d @testing/data.json
+
+hmac:
+	cat  testing/data.json | openssl dgst -sha512 -hmac "secret"

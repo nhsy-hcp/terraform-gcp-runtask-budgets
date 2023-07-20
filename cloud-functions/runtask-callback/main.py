@@ -1,0 +1,116 @@
+import json
+import os
+from flask import jsonify, make_response
+import functions_framework
+import google.cloud.logging
+import logging
+import re
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+import requests
+
+# Setup google cloud logging and ignore errors
+if "DISABLE_REMOTE_LOGGING" not in os.environ:
+    try:
+        client = google.cloud.logging.Client()
+        client.setup_logging()
+    except google.auth.exceptions.DefaultCredentialsError:
+        pass
+
+if 'LOG_LEVEL' in os.environ:
+    logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
+    logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
+
+@functions_framework.http
+def callback_handler(request):
+
+    try:
+        logging.info("headers: " + str(request.headers))
+        logging.info("payload: " + str(request.get_data()))
+
+        headers = request.headers
+        payload = request.get_json(silent=True)
+        status = 422
+        msg = "Error"
+
+        # Validate request
+        result, msg = __validate_request(payload)
+
+        if result:
+            # Send runtask callback response to TFC
+            endpoint = payload["detail"]["task_result_callback_url"]
+            access_token = payload["detail"]["access_token"]
+            # headers = __build_standard_headers(access_token)
+
+            # Pass access token into header
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-type': 'application/vnd.api+json',
+            }
+
+            status = str(payload["result"]["status"])
+            message = str(payload["result"]["message"])
+
+            logging.info("headers: {}".format(str(headers)))
+            logging.info("payload: {}".format(json.dumps(payload)))
+
+            __patch(endpoint, headers, status, message)
+            msg = "OK"
+            status = 200
+
+        return msg, status
+
+    except Exception as e:
+        logging.exception("Run Task Callback error: {}".format(e))
+        msg = "Internal Run Task Callback error occurred"
+        status = 500
+        logging.warning(f"{status} - {msg}: {e}")
+
+        return msg, status
+
+
+def __validate_request(payload: dict) -> (bool, str):
+    """Validate request values"""
+
+    result = True
+    msg = "Failed"
+
+    if payload is None:
+        msg = "Payload missing in request"
+        logging.warning(msg)
+        result = False
+
+    # elif "detail" not in payload:
+    #     msg = "Payload detail is missing"
+    #     logging.warning(msg)
+    #     result = False
+    #
+    # elif "result" not in payload:
+    #     msg = "Payload result is missing"
+    #     logging.warning(msg)
+    #     result = False
+
+    return result, msg
+
+def __patch(url: str, headers: dict, status: str, msg: str) -> None:
+    """Calls back to TFC with the result of the run task"""
+
+    # For details of payload and request see
+    # https://developer.hashicorp.com/terraform/cloud-docs/api-docs/run-tasks/run-tasks-integration#run-task-callback
+    payload = {
+        "data": {
+            "type": "task-results",
+            "attributes": {
+                "status": status,
+                "message": msg
+            },
+        }
+    }
+
+    logging.info(json.dumps(headers))
+    logging.info(json.dumps(payload))
+
+    with requests.patch(url, json.dumps(payload), headers=headers) as r:
+        logging.info(r)
+        r.raise_for_status()
