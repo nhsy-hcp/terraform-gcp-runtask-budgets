@@ -30,7 +30,7 @@ def process_handler(request):
 
         if payload:
             body = {
-                "message": "GCP Runtask Budgets - {}".format(result),
+                "message": "Google Cloud Runtask Budgets - {}".format(result),
                 "status": result
             }
 
