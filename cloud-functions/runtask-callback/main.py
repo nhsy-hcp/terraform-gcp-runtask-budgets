@@ -1,13 +1,8 @@
 import json
 import os
-from flask import jsonify, make_response
 import functions_framework
 import google.cloud.logging
 import logging
-import re
-from urllib.request import urlopen, Request
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
 import requests
 
 # Setup google cloud logging and ignore errors

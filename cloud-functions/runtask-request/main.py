@@ -1,6 +1,5 @@
 import json
 import os
-from flask import jsonify, make_response
 import functions_framework
 import logging
 import hmac
