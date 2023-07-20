@@ -32,4 +32,4 @@ deploy:
 		--allow-unauthenticated
 
 destroy:
-	gcloud functions destroy runtask-echo --region=europe-west-1 --quiet
+	gcloud functions delete runtask-echo --region=europe-west1 --quiet

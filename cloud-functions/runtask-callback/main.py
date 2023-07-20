@@ -31,33 +31,37 @@ def callback_handler(request):
 
         headers = request.headers
         payload = request.get_json(silent=True)
-        status = 422
         msg = "Error"
 
-        # Validate request
-        result, msg = __validate_request(payload)
+        if payload:
+            # Validate request
+            request_valid, msg = __validate_request(payload)
 
-        if result:
-            # Send runtask callback response to TFC
-            endpoint = payload["detail"]["task_result_callback_url"]
-            access_token = payload["detail"]["access_token"]
-            # headers = __build_standard_headers(access_token)
+            if request_valid:
+                # Send runtask callback response to TFC
+                endpoint = payload["task"]["task_result_callback_url"]
+                access_token = payload["task"]["access_token"]
 
-            # Pass access token into header
-            headers = {
-                'Authorization': f'Bearer {access_token}',
-                'Content-type': 'application/vnd.api+json',
-            }
+                # Pass access token into header
+                headers = {
+                    'Authorization': f'Bearer {access_token}',
+                    'Content-type': 'application/vnd.api+json',
+                }
 
-            status = str(payload["result"]["status"])
-            message = str(payload["result"]["message"])
+                status = str(payload["result"]["status"])
+                message = str(payload["result"]["message"])
 
-            logging.info("headers: {}".format(str(headers)))
-            logging.info("payload: {}".format(json.dumps(payload)))
+                logging.info("headers: {}".format(str(headers)))
+                logging.info("payload: {}".format(json.dumps(payload)))
 
-            __patch(endpoint, headers, status, message)
-            msg = "OK"
-            status = 200
+                __patch(endpoint, headers, status, message)
+
+                msg = "OK"
+                status = 200
+        else:
+            msg = "Payload missing in request"
+            status = 422
+            logging.warning(msg)
 
         return msg, status
 
@@ -76,20 +80,15 @@ def __validate_request(payload: dict) -> (bool, str):
     result = True
     msg = "Failed"
 
-    if payload is None:
-        msg = "Payload missing in request"
+    if "task" not in payload:
+        msg = "Task detail missing in request"
         logging.warning(msg)
         result = False
 
-    # elif "detail" not in payload:
-    #     msg = "Payload detail is missing"
-    #     logging.warning(msg)
-    #     result = False
-    #
-    # elif "result" not in payload:
-    #     msg = "Payload result is missing"
-    #     logging.warning(msg)
-    #     result = False
+    elif "result" not in payload:
+        msg = "Result detail missing in request"
+        logging.warning(msg)
+        result = False
 
     return result, msg
 

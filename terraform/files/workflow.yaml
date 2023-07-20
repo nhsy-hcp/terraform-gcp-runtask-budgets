@@ -5,7 +5,11 @@ main:
         call: http.post
         args:
             url: ${callback_url}
-            body: $${input}
+            body:
+                task: $${input}
+                result:
+                    message: "Tests completed successfully"
+                    status: "passed"
             auth:
                 type: OIDC
         result: callback_result
