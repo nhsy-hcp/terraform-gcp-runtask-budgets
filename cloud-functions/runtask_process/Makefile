@@ -12,7 +12,7 @@ build:
 	 runtask_callback
 
 run:
-	DISABLE_REMOTE_LOGGING=1 HMAC_KEY=secret functions-framework --target process_handler --debug
+	DISABLE_GOOGLE_LOGGING=1 HMAC_KEY=secret functions-framework --target process_handler --debug
 
 docker:
 	docker run --rm -p 8080:8080 runtask_callback

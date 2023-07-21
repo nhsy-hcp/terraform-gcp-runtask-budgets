@@ -1,6 +1,6 @@
 data "archive_file" "runtask_process" {
   type        = "zip"
-  source_dir  = "../cloud-functions/runtask-process"
+  source_dir  = "../cloud-functions/runtask_process"
   output_path = "../build/runtask-process-${random_string.suffix.id}.zip"
 
   excludes = ["__pycache__", "testing", "Makefile"]

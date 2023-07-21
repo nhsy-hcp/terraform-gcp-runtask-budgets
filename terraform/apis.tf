@@ -3,6 +3,7 @@ resource "google_project_service" "apis" {
     "artifactregistry.googleapis.com",
     "cloudbuild.googleapis.com",
     "cloudfunctions.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
     "run.googleapis.com",
     "containerregistry.googleapis.com",
     "workflows.googleapis.com"
