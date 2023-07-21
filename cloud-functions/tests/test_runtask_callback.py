@@ -48,7 +48,7 @@ def test_patch_invalid():
 
 
 def test_patch_valid():
-    url = "http://localhost:8081"
+    url = "http://localhost:8091"
     headers = {
         'Authorization': 'Bearer 12345',
         'Content-type': 'application/vnd.api+json',
@@ -57,7 +57,7 @@ def test_patch_valid():
     msg = "Tests passed"
 
     with requests_mock.Mocker() as mock_request:
-        mock_request.patch("http://localhost:8081", text="OK", status_code=200)
+        mock_request.patch("http://localhost:8091", text="OK", status_code=200)
         response = main.patch(url, headers, status, msg)
 
     assert response == 200

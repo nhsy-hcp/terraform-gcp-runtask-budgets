@@ -1,7 +1,7 @@
 import os
 import subprocess
 import pytest
-
+import time
 import requests
 from requests.packages.urllib3.util.retry import Retry
 
@@ -9,7 +9,7 @@ from requests.packages.urllib3.util.retry import Retry
 @pytest.fixture
 def localhost_server():
     port = os.getenv(
-        "PORT", 8081
+        "PORT", 8090
     )  # Each functions framework instance needs a unique port
 
     process = subprocess.Popen(
