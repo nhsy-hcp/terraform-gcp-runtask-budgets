@@ -1,11 +1,12 @@
-import os
-import functions_framework
-import google.cloud.logging
 import logging
+import os
 import random
 
+import functions_framework
+import google.cloud.logging
+
 # Setup google cloud logging and ignore errors
-if "DISABLE_REMOTE_LOGGING" not in os.environ:
+if "DISABLE_GOOGLE_LOGGING" not in os.environ:
     try:
         client = google.cloud.logging.Client()
         client.setup_logging()

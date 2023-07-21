@@ -6,7 +6,7 @@ import logging
 import requests
 
 # Setup google cloud logging and ignore errors
-if "DISABLE_REMOTE_LOGGING" not in os.environ:
+if "DISABLE_GOOGLE_LOGGING" not in os.environ:
     try:
         client = google.cloud.logging.Client()
         client.setup_logging()
@@ -30,7 +30,7 @@ def callback_handler(request):
 
         if payload:
             # Validate request
-            request_valid, msg = __validate_request(payload)
+            request_valid, msg = validate_request(payload)
 
             if request_valid:
                 # Send runtask callback response to TFC
@@ -49,7 +49,7 @@ def callback_handler(request):
                 logging.info("headers: {}".format(str(headers)))
                 logging.info("payload: {}".format(json.dumps(payload)))
 
-                __patch(endpoint, headers, status, message)
+                patch(endpoint, headers, status, message)
 
                 msg = "OK"
                 status = 200
@@ -68,12 +68,11 @@ def callback_handler(request):
 
         return msg, status
 
-
-def __validate_request(payload: dict) -> (bool, str):
+def validate_request(payload: dict) -> (bool, str):
     """Validate request values"""
 
     result = True
-    msg = "Failed"
+    msg = None
 
     if "task" not in payload:
         msg = "Task detail missing in request"
@@ -87,24 +86,30 @@ def __validate_request(payload: dict) -> (bool, str):
 
     return result, msg
 
-def __patch(url: str, headers: dict, status: str, msg: str) -> None:
+
+def patch(url: str, headers: dict, status: str, msg: str) -> int:
     """Calls back to TFC with the result of the run task"""
 
     # For details of payload and request see
     # https://developer.hashicorp.com/terraform/cloud-docs/api-docs/run-tasks/run-tasks-integration#run-task-callback
-    payload = {
-        "data": {
-            "type": "task-results",
-            "attributes": {
-                "status": status,
-                "message": msg
-            },
+    if url and headers and status:
+        payload = {
+            "data": {
+                "type": "task-results",
+                "attributes": {
+                    "status": status,
+                    "message": msg
+                },
+            }
         }
-    }
 
-    logging.info(json.dumps(headers))
-    logging.info(json.dumps(payload))
+        logging.info(json.dumps(headers))
+        logging.info(json.dumps(payload))
 
-    with requests.patch(url, json.dumps(payload), headers=headers) as r:
-        logging.info(r)
-        r.raise_for_status()
+        with requests.patch(url, json.dumps(payload), headers=headers) as r:
+            logging.info(r)
+            r.raise_for_status()
+
+        return r.status_code
+
+    raise TypeError("Missing params")
