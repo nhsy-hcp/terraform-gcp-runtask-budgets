@@ -1,7 +1,6 @@
 from unittest.mock import Mock
 from runtask_process import main
 
-
 def test_process_handler():
     req = Mock(get_json=Mock())
 

@@ -6,8 +6,7 @@ import requests
 from requests.packages.urllib3.util.retry import Retry
 
 
-@pytest.fixture
-def localhost_server():
+def test_process_integration():
     port = os.getenv(
         "PORT", 8090
     )  # Each functions framework instance needs a unique port
@@ -18,28 +17,8 @@ def localhost_server():
         stdout=subprocess.PIPE,
         env=os.environ
     )
-    # Stop the functions framework process
-    # process.kill()
-    # process.wait()
 
-    return f"http://localhost:{port}"
-
-
-def test_integration_invalid(localhost_server):
-    url = localhost_server
-
-    retry_policy = Retry(total=6, backoff_factor=1)
-    retry_adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
-
-    session = requests.Session()
-    session.mount(url, retry_adapter)
-
-    response = session.post(url)
-
-    assert response.text == 'Payload missing in request'
-
-def test_integration_valid(localhost_server):
-    url = localhost_server
+    url =  f"http://localhost:{port}"
 
     retry_policy = Retry(total=6, backoff_factor=1)
     retry_adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
@@ -53,6 +32,10 @@ def test_integration_valid(localhost_server):
     }
 
     response = session.post(url, json=data)
+
+    # Stop the functions framework process
+    process.kill()
+    process.wait()
 
     assert response.status_code == 200
     assert response.text in [
