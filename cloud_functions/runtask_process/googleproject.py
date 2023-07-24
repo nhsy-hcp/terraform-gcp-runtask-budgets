@@ -20,13 +20,11 @@ class GoogleProject:
         self.default_project_id = default_project_id
         self.client = resourcemanager_v3.ProjectsClient(credentials=credentials)
 
-
     def get(self, project_id: str) -> google.cloud.resourcemanager_v3.types.projects.Project:
         request = resourcemanager_v3.GetProjectRequest(name="projects/{}".format(project_id))
         self.project = self.client.get_project(request=request)
 
         return self.project
-
 
     def label(self, label: str) -> str:
         value = ""

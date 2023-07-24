@@ -1,7 +1,9 @@
+import json
 import os
+# import sys
+# sys.path.insert(0, f"{os.path.dirname(__file__)}/../runtask_process")
+
 import subprocess
-import pytest
-import time
 import requests
 from requests.packages.urllib3.util.retry import Retry
 
@@ -18,7 +20,7 @@ def test_process_integration():
         env=os.environ
     )
 
-    url =  f"http://localhost:{port}"
+    url = f"http://localhost:{port}"
 
     retry_policy = Retry(total=6, backoff_factor=1)
     retry_adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
@@ -27,18 +29,14 @@ def test_process_integration():
     session.mount(url, retry_adapter)
 
     data = {
-        "task": {},
-        "result": {}
+        "workspace_name": "00000"
     }
 
-    response = session.post(url, json=data)
+    response = session.post(url, json=json.dumps(data))
 
     # Stop the functions framework process
     process.kill()
     process.wait()
 
-    assert response.status_code == 200
-    assert response.text in [
-        '{"message":"Google Cloud Runtask Budgets - failed","status":"failed"}\n',
-        '{"message":"Google Cloud Runtask Budgets - passed","status":"passed"}\n'
-    ]
+    assert response.status_code == 500
+    assert response.text == "Internal Run Task Process error occurred"

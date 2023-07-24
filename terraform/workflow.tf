@@ -11,8 +11,14 @@ resource "google_workflows_workflow" "runtask-budgets" {
   )
 }
 
-resource "google_project_iam_member" "workflows_invoker" {
+resource "google_project_iam_member" "workflows_invoker_1" {
   member  = "serviceAccount:${google_service_account.cloud_function_runtasks.email}"
+  project = var.project_id
+  role    = "roles/workflows.invoker"
+}
+
+resource "google_project_iam_member" "workflows_invoker_2" {
+  member  = "serviceAccount:${google_service_account.cloud_function_runtask_process.email}"
   project = var.project_id
   role    = "roles/workflows.invoker"
 }

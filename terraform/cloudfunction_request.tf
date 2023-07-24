@@ -1,13 +1,13 @@
 data "archive_file" "runtask_request" {
   type        = "zip"
-  source_dir  = "../cloud-functions/runtask_request"
-  output_path = "../build/runtask-request-${random_string.suffix.id}.zip"
+  source_dir  = "../cloud_functions/runtask_request"
+  output_path = "../build/runtask_request.zip"
 
   excludes = ["__pycache__", "testing", "Makefile"]
 }
 
 resource "google_storage_bucket_object" "runtask_request" {
-  name   = "runtask-request-${random_string.suffix.id}-${data.archive_file.runtask_request.output_md5}.zip"
+  name   = "runtask_request_${random_string.suffix.id}_${data.archive_file.runtask_request.output_md5}.zip"
   bucket = google_storage_bucket.cloud_functions.name
   source = data.archive_file.runtask_request.output_path
 }
