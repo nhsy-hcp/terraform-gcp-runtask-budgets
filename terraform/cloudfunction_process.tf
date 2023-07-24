@@ -1,6 +1,6 @@
 data "archive_file" "runtask_process" {
   type        = "zip"
-  source_dir  = "../cloud-functions/runtask_process"
+  source_dir  = "../cloud_functions/runtask_process"
   output_path = "../build/runtask-process-${random_string.suffix.id}.zip"
 
   excludes = ["__pycache__", "testing", "Makefile"]
@@ -34,7 +34,7 @@ resource "google_cloudfunctions2_function" "runtask_process" {
     ingress_settings                 = "ALLOW_ALL"
     max_instance_count               = 1
     max_instance_request_concurrency = 3
-    service_account_email            = google_service_account.cloud_function_runtasks.email
+    service_account_email            = google_service_account.cloud_function_runtask_process.email
     timeout_seconds                  = 30
   }
 }

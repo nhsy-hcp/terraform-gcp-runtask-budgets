@@ -3,7 +3,6 @@ import requests_mock
 from unittest.mock import Mock
 from runtask_callback import main
 
-
 def test_callback_handler_validate_request():
     data = {
         "task": {},

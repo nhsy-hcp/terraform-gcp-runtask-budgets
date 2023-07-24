@@ -12,7 +12,12 @@ resource "google_workflows_workflow" "runtask-budgets" {
 }
 
 resource "google_project_iam_member" "workflows_invoker" {
-  member  = "serviceAccount:${google_service_account.cloud_function_runtasks.email}"
+  for_each = toset([
+    "serviceAccount:${google_service_account.cloud_function_runtasks.email}",
+    "serviceAccount:${google_service_account.cloud_function_runtask_process.email}"
+  ])
+
+  member  = each.value
   project = var.project_id
   role    = "roles/workflows.invoker"
 }

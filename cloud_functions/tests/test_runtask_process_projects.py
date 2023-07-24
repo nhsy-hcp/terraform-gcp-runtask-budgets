@@ -1,10 +1,10 @@
 import pytest
-from runtask_process import google_project
 
+from runtask_process import googleproject
 
 @pytest.fixture
-def proj() -> google_project.GoogleProject:
-    proj = google_project.GoogleProject()
+def proj() -> googleproject.GoogleProject:
+    proj = googleproject.GoogleProject()
     proj.get(proj.default_project_id)
 
     return proj
@@ -20,4 +20,4 @@ def test_project_label_invalid(proj):
 
 def test_project_label_missing(proj):
     with pytest.raises(TypeError):
-        assert proj.label()
+        proj.label()

@@ -1,6 +1,6 @@
 data "archive_file" "runtask_callback" {
   type        = "zip"
-  source_dir  = "../cloud-functions/runtask_callback"
+  source_dir  = "../cloud_functions/runtask_callback"
   output_path = "../build/runtask-callback-${random_string.suffix.id}.zip"
 
   excludes = ["__pycache__", "testing", "Makefile"]

@@ -7,3 +7,7 @@ variable "region" {
 variable "hmac_key" {
   default = "secret"
 }
+
+variable "project_viewer" {
+  default = []
+}
