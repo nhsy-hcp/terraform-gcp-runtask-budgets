@@ -48,4 +48,4 @@ build/*
 .ssh/
 
 .idea/
-cloud-functions/*/testing
+cloud_functions/*/tests
