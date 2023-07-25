@@ -9,5 +9,5 @@ variable "hmac_key" {
 }
 
 variable "project_viewer" {
-  default = []
+  type = string
 }

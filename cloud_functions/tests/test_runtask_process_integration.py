@@ -1,3 +1,4 @@
+import json
 import os
 # import sys
 # sys.path.insert(0, f"{os.path.dirname(__file__)}/../runtask_process")
@@ -27,13 +28,15 @@ def test_process_integration():
     session = requests.Session()
     session.mount(url, retry_adapter)
 
-    data = "{}"
-    response = session.post(url, json=data)
+    data = {
+        "workspace_name": "00000"
+    }
+
+    response = session.post(url, json=json.dumps(data))
 
     # Stop the functions framework process
     process.kill()
     process.wait()
 
-
-    assert response.status_code == 422
-    assert response.text  == "{}"
+    assert response.status_code == 500
+    assert response.text == "Internal Run Task Process error occurred"

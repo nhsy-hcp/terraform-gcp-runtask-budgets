@@ -1,19 +1,18 @@
 resource "google_service_account" "cloud_function_runtasks" {
-  account_id = "cloud-function-runtasks"
+  account_id = "cf-runtasks-${random_string.suffix.id}"
 }
 
 resource "google_service_account" "cloud_function_runtask_process" {
-  account_id = "cloud-function-runtask-process"
+  account_id = "cf-runtask-process-${random_string.suffix.id}"
 }
 
 resource "google_service_account" "workflow_runtasks" {
-  account_id = "workflow-runtasks"
+  account_id = "wf-runtasks-${random_string.suffix.id}"
 }
 
 # Allow runtask_process cloud function to lookup project labels
 resource "google_project_iam_member" "project_viewer" {
-  for_each = toset(var.project_viewer)
-  member   = "serviceAccount:${google_service_account.cloud_function_runtask_process.email}"
-  project  = each.value
-  role     = "roles/browser"
+  member  = "serviceAccount:${google_service_account.cloud_function_runtask_process.email}"
+  project = var.project_viewer
+  role    = "roles/browser"
 }
