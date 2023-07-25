@@ -12,7 +12,7 @@ build:
 	 runtask_request
 
 run:
-	DISABLE_GOOGLE_LOGGING=1 HMAC_KEY=secret RUNTASK_PROJECT=runtask-budgets-10181 RUNTASK_REGION=europe-west1 RUNTASK_WORKFLOW=1234 \
+	DISABLE_GOOGLE_LOGGING=1 HMAC_KEY=secret RUNTASK_PROJECT=runtask-12345 RUNTASK_REGION=europe-west1 RUNTASK_WORKFLOW=12345 LOG_LEVEL=INFO \
 		functions-framework --target request_handler --debug
 
 docker:
