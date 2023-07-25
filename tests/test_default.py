@@ -40,18 +40,10 @@ def test_variables(plan):
     assert "project_id" in tf_vars, "project_id not in tf var plan"
 
 @pytest.mark.plan
-def test_plan(plan):
+def test_plan_gcs_cloud_function(plan):
+    res = plan.resources['google_storage_bucket.cloud_functions']
     assert 'google_storage_bucket.cloud_functions' in plan.resources
-
-@pytest.mark.plan
-def test_plan_gcs_cloud_function_region(plan):
-    res = plan.resources['google_storage_bucket.cloud_functions']
     assert res['values']['location'] == plan.variables['region'].upper()
-
-
-@pytest.mark.plan
-def test_plan_gcs_cloud_function_region(plan):
-    res = plan.resources['google_storage_bucket.cloud_functions']
     assert res['values']['uniform_bucket_level_access'] == True
 
 
