@@ -28,15 +28,17 @@ def test_process_integration():
     session = requests.Session()
     session.mount(url, retry_adapter)
 
-    data = {
+    payload = {
+        "organization_name": "00000",
+        "stage": "test",
         "workspace_name": "00000"
     }
 
-    response = session.post(url, json=json.dumps(data))
+    response = session.post(url, json=payload)
 
     # Stop the functions framework process
     process.kill()
     process.wait()
 
-    assert response.status_code == 500
-    assert response.text == "Internal Run Task Process error occurred"
+    assert response.status_code == 200
+    assert response.text == ('{"message":"Google Cloud Runtask Budgets - Google project label lookup failed","status":"failed"}\n')
