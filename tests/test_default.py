@@ -8,6 +8,13 @@ BASE_DIR = f"{os.path.dirname(__file__)}/../terraform"
 
 
 @pytest.fixture(scope="session")
+def plan():
+    tf = tftest.TerraformTest(tfdir=BASE_DIR)
+    tf.setup(use_cache=True)
+    return tf.plan(output=True, use_cache=True)
+
+
+@pytest.fixture(scope="session")
 def apply():
     targets = []
     # targets = [
@@ -22,13 +29,6 @@ def apply():
 
 
 @pytest.fixture(scope="session")
-def plan():
-    tf = tftest.TerraformTest(tfdir=BASE_DIR)
-    tf.setup(use_cache=True)
-    return tf.plan(output=True, use_cache=True)
-
-
-@pytest.fixture(scope="session")
 def state(apply):
     with open(os.path.join(BASE_DIR, "terraform.tfstate")) as state_file:
         return tftest.TerraformState(json.load(state_file))
@@ -38,6 +38,7 @@ def state(apply):
 def test_variables(plan):
     tf_vars = plan.variables
     assert "project_id" in tf_vars, "project_id not in tf var plan"
+
 
 @pytest.mark.plan
 def test_plan_gcs_cloud_function(plan):
@@ -57,9 +58,11 @@ def test_state_cloud_function_callback(state):
     cloud_function_state = state.resources["None.google_cloudfunctions2_function.runtask_callback"]['instances'][0]['attributes']['state']
     assert cloud_function_state == "ACTIVE"
 
+
 def test_state_cloud_function_process(state):
     cloud_function_state = state.resources["None.google_cloudfunctions2_function.runtask_process"]['instances'][0]['attributes']['state']
     assert cloud_function_state == "ACTIVE"
+
 
 def test_state_cloud_function_request(state):
     cloud_function_state = state.resources["None.google_cloudfunctions2_function.runtask_request"]['instances'][0]['attributes']['state']
