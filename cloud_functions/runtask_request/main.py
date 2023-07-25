@@ -63,47 +63,52 @@ def request_handler(request):
         logging.info("headers: " + str(request.headers))
         logging.info("payload: " + str(request.get_data()))
 
-        headers = request.headers
-        payload = request.get_json(silent=True)
-        # request_args = request.args
-        status = 422
+        request_headers = request.headers
+        request_payload = request.get_json(silent=True)
+
+        http_code = 422
 
         if not HMAC_KEY:
             msg = "HMAC key environment variable missing on server"
-            status = 500
+            http_code = 500
             logging.error(msg)
         elif not RUNTASK_PROJECT:
             msg = "Project environment variable missing on server"
-            status = 500
+            http_code = 500
             logging.error(msg)
         elif not RUNTASK_REGION:
             msg = "Region environment variable missing on server"
-            status = 500
+            http_code = 500
             logging.error(msg)
         elif not RUNTASK_WORKFLOW:
             msg = "Workflow name environment variable missing on server"
-            status = 500
+            http_code = 500
             logging.error(msg)
-        elif payload:
-            result, msg = __validate_request(headers, payload)
+        elif request_payload:
+            result, msg = __validate_request(request_headers, request_payload)
             if result:
                 # Check HMAC signature
-                signature = headers['x-tfc-task-signature']
+                signature = request_headers['x-tfc-task-signature']
                 # Need to use request.get_data() for hmac digest
                 if __validate_hmac(HMAC_KEY, request.get_data(), signature):
-                    __execute_workflow(payload)
-                    msg = "OK"
-                    status = 200
+                    try:
+                        __execute_workflow(request_payload)
+                        msg = "OK"
+                        http_code = 200
+                    except Exception as e:
+                        http_code = 500
+                        msg = "Workflow execution error"
+                        logging.error(msg)
                 else:
                     msg = "HMAC signature invalid"
                     logging.warning(msg)
         else:
-            status = 200
+            http_code = 200
             msg = "Payload missing in request"
 
-        logging.info(f"{status} - {msg}")
+        logging.info(f"{http_code} - {msg}")
 
-        return msg, status
+        return msg, http_code
 
     except Exception as e:
         logging.exception("Run Task Request error: {}".format(e))
@@ -131,6 +136,21 @@ def __validate_request(headers, payload) -> (bool, str):
 
     elif "x-tfc-task-signature" not in headers:
         msg = "TFC Task signature missing"
+        logging.warning(msg)
+        result = False
+
+    elif "organization_name" not in payload.keys():
+        msg = "TFC payload missing : organization_name"
+        logging.warning(msg)
+        result = False
+
+    elif "stage" not in payload.keys():
+        msg = "TFC payload missing : stage"
+        logging.warning(msg)
+        result = False
+
+    elif "workspace_name" not in payload.keys():
+        msg = "TFC payload missing : workspace_name"
         logging.warning(msg)
         result = False
 
