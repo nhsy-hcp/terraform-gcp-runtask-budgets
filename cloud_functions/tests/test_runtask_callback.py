@@ -65,4 +65,4 @@ def test_patch_valid():
 def test_callback_handler_no_data():
     data = {}
     req = Mock(get_json=Mock(return_value=data), args=data)
-    assert main.callback_handler(req) == ('Payload missing in request', 422) != None
+    assert main.callback_handler(req) == ('Payload missing in request', 422)
