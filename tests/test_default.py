@@ -6,11 +6,18 @@ import tftest
 
 BASE_DIR = f"{os.path.dirname(__file__)}/../terraform"
 
+if "DISABLE_DESTROY" in os.environ and os.environ["DISABLE_DESTROY"] == "1":
+    DISABLE_DESTROY = True
+else:
+    DISABLE_DESTROY = False
+
 
 @pytest.fixture(scope="session")
 def plan():
     tf = tftest.TerraformTest(tfdir=BASE_DIR)
-    tf.setup(use_cache=True)
+    if not DISABLE_DESTROY:
+        tf.setup(use_cache=True)
+
     return tf.plan(output=True, use_cache=True)
 
 
@@ -22,10 +29,15 @@ def apply():
     #     "google_cloudfunctions2_function.runtask_process"
     # ]
     tf = tftest.TerraformTest(BASE_DIR)
-    tf.setup(use_cache=True, cleanup_on_exit=True)
+
+    if not DISABLE_DESTROY:
+        tf.setup(use_cache=True, cleanup_on_exit=True)
+
     tf.apply(output=True, use_cache=True, targets=targets)
     yield tf.output()
-    tf.destroy(use_cache=True, **{"auto_approve": True})
+
+    if not DISABLE_DESTROY:
+        tf.destroy(use_cache=True, **{"auto_approve": True})
 
 
 @pytest.fixture(scope="session")
@@ -86,8 +98,7 @@ def test_apply_cloud_function_request_uri(apply):
 
     with requests.get(url) as r:
         r.raise_for_status()
-
-    assert r.status_code == 200
+        assert r.status_code == 200
 
 
 def test_apply_cloud_function_process_uri(apply):
