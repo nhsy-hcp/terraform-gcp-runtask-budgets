@@ -61,3 +61,13 @@ resource "google_cloud_run_service_iam_member" "runtask_request_cloud_run_invoke
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+check "cloudfunction_request_health" {
+  data "http" "cloudfunction_request" {
+    url = google_cloudfunctions2_function.runtask_request.url
+  }
+  assert {
+    condition     = data.http.cloudfunction_request.status_code == 200
+    error_message = format("Cloud function request unhealthy: %s - %s", data.http.cloudfunction_request.status_code, data.http.cloudfunction_request.response_body)
+  }
+}
