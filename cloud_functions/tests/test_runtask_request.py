@@ -12,10 +12,11 @@ from runtask_request import main
 @pytest.fixture(scope="session")
 def test_request():
     headers = {
-        "x-tfc-task-signature": "5545ca49fbcee7cd22bb3b2ba2268389a5666c52fa70f13678d8ab0163f29899d0ec3e94d73cc124bfc92e6b47ed6ef2ba6f099b7ed010b288224e7063044bb9"
+        "x-tfc-task-signature": "b7832ce69b791e39105e50ca55039aede4778caec8e24a20c2f6acaa5274e397cef80a450b44acd6fcc62517784ae970021c338314301c5f39e7ae579db29249"
     }
 
     payload = {
+        "plan_json_api_url": "https://localhost:8080/api/v1/plan",
         "organization_name": "00000",
         "stage": "test",
         "workspace_name": "00000",
