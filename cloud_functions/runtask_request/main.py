@@ -35,7 +35,7 @@ if "HMAC_KEY" in os.environ:
 else:
     HMAC_KEY = False
 
-RUNTASK_STAGES = ["pre_plan", "post_plan", "test"]
+RUNTASK_STAGES = ["post_plan", "test"]
 
 if "RUNTASK_PROJECT" in os.environ:
     RUNTASK_PROJECT = os.environ["RUNTASK_PROJECT"]
@@ -151,6 +151,11 @@ def __validate_request(headers, payload) -> (bool, str):
 
     elif "workspace_name" not in payload.keys():
         msg = "TFC payload missing : workspace_name"
+        logging.warning(msg)
+        result = False
+
+    elif "plan_json_api_url" not in payload.keys():
+        msg = "TFC payload missing : plan_json_api_url"
         logging.warning(msg)
         result = False
 

@@ -3,3 +3,4 @@ flask==2.3.2
 google-cloud-error-reporting==1.9.2
 google-cloud-logging==3.6.0
 google-cloud-resource-manager==1.10.2
+jsonpath-ng==1.5.3
