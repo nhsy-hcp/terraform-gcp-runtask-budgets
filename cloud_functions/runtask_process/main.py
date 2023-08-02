@@ -3,6 +3,9 @@ import os
 import functions_framework
 import google.cloud.logging
 import googleproject
+import terraformcloud
+import terraformplan
+from typing import List
 
 # Setup google cloud logging and ignore errors if authentication fails
 if "DISABLE_GOOGLE_LOGGING" not in os.environ:
@@ -12,8 +15,8 @@ if "DISABLE_GOOGLE_LOGGING" not in os.environ:
     except google.auth.exceptions.DefaultCredentialsError:
         pass
 
-if 'LOG_LEVEL' in os.environ:
-    logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
+if "LOG_LEVEL" in os.environ:
+    logging.getLogger().setLevel(os.environ["LOG_LEVEL"])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
 
 if "TFC_PROJECT_LABEL" in os.environ:
@@ -21,21 +24,28 @@ if "TFC_PROJECT_LABEL" in os.environ:
 else:
     TFC_PROJECT_LABEL = "tfc-deploy"
 
+
 @functions_framework.http
 def process_handler(request):
-
     try:
         logging.info("headers: " + str(request.headers))
         logging.info("payload: " + str(request.get_data()))
 
-        headers = request.headers
         payload = request.get_json(silent=True)
         http_msg = "{}"
 
-        if payload and "workspace_name" in payload:
+        if payload and ("access_token" in payload and "plan_json_api_url" in payload):
+            access_token = payload["access_token"]
+            plan_json_api_url = payload["plan_json_api_url"]
 
-            project_id = payload["workspace_name"]
-            validate_result, validate_msg = validate_deployment(project_id)
+            project_ids, msg = __get_project_ids(access_token, plan_json_api_url)
+
+            if project_ids:
+                validate_result, validate_msg = __validate_project_ids(project_ids)
+            else:
+                validate_result = False
+                validate_msg = msg
+
             runtask_msg = "Google Cloud Runtask Budgets - {}".format(validate_msg)
 
             if validate_result:
@@ -43,10 +53,7 @@ def process_handler(request):
             else:
                 runtask_status = "failed"
 
-            http_msg = {
-                "message": runtask_msg,
-                "status": runtask_status
-            }
+            http_msg = {"message": runtask_msg, "status": runtask_status}
 
             http_code = 200
 
@@ -68,23 +75,41 @@ def process_handler(request):
         return msg, status
 
 
-def validate_deployment(project_id: str) -> (bool, str):
-
-    msg = ""
+def __validate_project_ids(project_ids: List[str]) -> (bool, str):
     result = False
+    disabled_project_ids = []
+
     try:
         proj = googleproject.GoogleProject()
-        proj.get(project_id)
+        for project_id in project_ids:
+            proj.get(project_id)
+            if proj.label(TFC_PROJECT_LABEL).lower() == "false":
+                disabled_project_ids.append(project_id)
 
-        if proj.label(TFC_PROJECT_LABEL).lower() == "true":
-            result = True
-            msg = "TFC deployments enabled"
+        if disabled_project_ids:
+            msg = "TFC deployments disabled: {}".format(", ".join(disabled_project_ids))
         else:
-            msg = "TFC deployments disabled"
+            msg = "TFC deployments enabled: {}".format(", ".join(project_ids))
+            result = True
 
     except Exception as e:
         logging.exception("Warning: {}".format(e))
-        # print("Error: {}".format(e))
-        msg = "Google project label lookup failed"
+        msg = "Google project label lookup failed: {}".format(", ".join(project_ids))
 
     return result, msg
+
+
+def __get_project_ids(access_token, plan_json_api_url) -> (List[str], str):
+    msg = ""
+    project_ids = []
+
+    try:
+        plan_json = terraformcloud.download_json_plan(access_token, plan_json_api_url)
+        # logging.info("plan_json: " + str(plan_json))
+        project_ids = terraformplan.get_project_ids(plan_json)
+        logging.info("project_ids: " + str(project_ids))
+    except Exception as e:
+        logging.warning("Warning: {}".format(e))
+        msg = "TFC plan download or parse failed"
+
+    return project_ids, msg

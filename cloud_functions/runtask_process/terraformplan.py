@@ -1,26 +1,26 @@
 import json
-from jsonpath_ng import jsonpath  # doesn't support filter expressions
-from jsonpath_ng.ext import parse
 import os
 from typing import List
+
+from jsonpath_ng.ext import parse
 
 
 def get_project_ids(plan_json: dict) -> List[str]:
     """
-    Return project id's by searching google and google-beta providers.
-
     :param plan_json: terraform plan json
     :return: project id list
+
+    Return project id's by searching google and google-beta providers.
     """
 
     jsonpath_references_expressions = [
         '$.configuration.provider_config[?(@.name = "google")].expressions.project.references',
-        '$.configuration.provider_config[?(@.name = "google-beta")].expressions.project.references'
+        '$.configuration.provider_config[?(@.name = "google-beta")].expressions.project.references',
     ]
 
     jsonpath_values_expressions = [
         '$.configuration.provider_config[?(@.name = "google")].expressions.project.constant_value',
-        '$.configuration.provider_config[?(@.name = "google-beta")].expressions.project.constant_value'
+        '$.configuration.provider_config[?(@.name = "google-beta")].expressions.project.constant_value',
     ]
 
     project_ids = []
@@ -35,18 +35,20 @@ def get_project_ids(plan_json: dict) -> List[str]:
 
 def __get_jsonpath_references(plan_json: dict, json_expressions: List[str]) -> List[str]:
     """
-    Return project id's by references lookup in terraform provider.
-
     :param plan_json: terraform plan json
     :param json_expressions: terraform provider variable references filters
     :return: project id list
+
+    Return project id's by references lookup in terraform provider.
     """
     project_vars = []
     ret_values = []
 
     for json_expression in json_expressions:
         # print("json_expression: {}".format(json_expression))
-        json_expression_project_vars = __flatten_list([match.value for match in parse(json_expression).find(plan_json)])
+        json_expression_project_vars = __flatten_list(
+            [match.value for match in parse(json_expression).find(plan_json)]
+        )
         # print("json_expression_project_vars: {}".format(json_expression_project_vars))
         project_vars.extend(json_expression_project_vars)
         # print("project_vars: {}".format(project_vars))
@@ -65,11 +67,11 @@ def __get_jsonpath_references(plan_json: dict, json_expressions: List[str]) -> L
 
 def __get_jsonpath_values(plan_json: dict, json_expressions: List[str]) -> List[str]:
     """
-    Return project id's by constant value lookup in terraform provider.
-
     :param plan_json: terraform plan json
     :param json_expressions: terraform provider constant value filters
     :return: project id list
+
+    Return project id's by constant value lookup in terraform provider.
     """
 
     ret_values = []
@@ -87,11 +89,11 @@ def __get_jsonpath_values(plan_json: dict, json_expressions: List[str]) -> List[
 
 def __get_terraform_variable(plan_json: dict, terraform_variable: str) -> str:
     """
-    Returns value of terraform variable
-
     :param plan_json: terraform plan json
     :param terraform_variable: terraform variable to lookup
     :return: terraform variable value
+
+    Returns value of terraform string variable
     """
 
     # print("terraform_variable: {}".format(terraform_variable))
@@ -121,5 +123,5 @@ if __name__ == "__main__":
     TF_PLAN = f"{os.path.dirname(__file__)}/tests/tfplan.json"
 
     with open(TF_PLAN) as tfplan_file:
-        tfplan = json.load(tfplan_file)
-        print(get_project_ids(tfplan))
+        plan_json = json.load(tfplan_file)
+        print(get_project_ids(plan_json))
