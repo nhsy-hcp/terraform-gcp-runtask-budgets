@@ -1,5 +1,5 @@
 import json
-from jsonpath_ng import jsonpath
+from jsonpath_ng import jsonpath  # doesn't support filter expressions
 from jsonpath_ng.ext import parse
 import os
 from typing import List
@@ -7,7 +7,7 @@ from typing import List
 
 def get_project_ids(plan_json: dict) -> List[str]:
     """
-    Return project id's by searching for google and google-beta providers.
+    Return project id's by searching google and google-beta providers.
 
     :param plan_json: terraform plan json
     :return: project id list
@@ -35,6 +35,7 @@ def get_project_ids(plan_json: dict) -> List[str]:
 
 def __get_jsonpath_references(plan_json: dict, json_expressions: List[str]) -> List[str]:
     """
+    Return project id's by references lookup in terraform provider.
 
     :param plan_json: terraform plan json
     :param json_expressions: terraform provider variable references filters
@@ -64,6 +65,7 @@ def __get_jsonpath_references(plan_json: dict, json_expressions: List[str]) -> L
 
 def __get_jsonpath_values(plan_json: dict, json_expressions: List[str]) -> List[str]:
     """
+    Return project id's by constant value lookup in terraform provider.
 
     :param plan_json: terraform plan json
     :param json_expressions: terraform provider constant value filters
@@ -84,6 +86,13 @@ def __get_jsonpath_values(plan_json: dict, json_expressions: List[str]) -> List[
 
 
 def __get_terraform_variable(plan_json: dict, terraform_variable: str) -> str:
+    """
+    Returns value of terraform variable
+
+    :param plan_json: terraform plan json
+    :param terraform_variable: terraform variable to lookup
+    :return: terraform variable value
+    """
 
     # print("terraform_variable: {}".format(terraform_variable))
     jsonpath_expression = "$.variables.{}.value".format(terraform_variable)
