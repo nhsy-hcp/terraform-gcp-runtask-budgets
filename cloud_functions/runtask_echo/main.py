@@ -26,17 +26,17 @@ def echo_handler(request):
         headers = request.headers
         payload = (request.get_data()).decode("utf-8")
 
-        msg = "headers:\n"
-        msg += str(headers)
-        msg += "\n\n"
-        msg += "data:\n"
-        msg += payload
+        http_message = "headers:\n"
+        http_message += str(headers)
+        http_message += "\n\n"
+        http_message += "data:\n"
+        http_message += payload
 
-        return msg
+        return http_message
 
     except Exception as e:
         logging.exception("Error: {}".format(e))
-        msg = "Internal error occurred"
-        status = 500
+        http_message = "Internal error occurred"
+        http_status = 500
 
-        return msg, status
+        return http_message, http_status

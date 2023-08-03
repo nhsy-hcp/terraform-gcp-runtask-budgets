@@ -7,37 +7,44 @@ from jsonpath_ng.ext import parse
 
 
 def validate_plan(plan_json: dict) -> (bool, str):
+    """
+    Validate terraform plan and check for destroy and noop resources
+
+    :param plan_json: terraform plan json
+    :return: true if terraform plan is a destroy or noop
+    """
 
     jsonpath_expression = "$.resource_changes[*].change.actions[*]"
+
     matches = [match.value for match in parse(jsonpath_expression).find(plan_json)]
     # print("matches: {}".format(matches))
     resources = __list_to_dict_with_counts(matches)
     # print("resources: {}".format(resources))
     # print("plan_json: {}".format(plan_json))
-    msg = []
+    message = []
 
     for key, value in resources.items():
         key_str = str(key)
         value_str = str(value)
-        msg.append(f"{key_str}: {value_str}")
+        message.append(f"{key_str}: {value_str}")
 
-    result_msg = ", ".join(msg)
-    # print("result_msg: {}".format(result_msg))
+    result_message = ", ".join(message)
+    # print("result_message: {}".format(result_message))
 
     if len(resources.keys()) == 0:
         return True, "noop"
     elif list(resources.keys()) == ["delete"]:
-        return True, result_msg
+        return True, result_message
     else:
-        return False, result_msg
+        return False, result_message
 
 
 def get_project_ids(plan_json: dict) -> List[str]:
     """
+    Return project id's by searching google and google-beta providers.
+
     :param plan_json: terraform plan json
     :return: project id list
-
-    Return project id's by searching google and google-beta providers.
     """
 
     jsonpath_references_expressions = [
@@ -62,12 +69,13 @@ def get_project_ids(plan_json: dict) -> List[str]:
 
 def __get_jsonpath_references(plan_json: dict, jsonpath_expressions: List[str]) -> List[str]:
     """
+    Return project id's by references lookup in terraform provider.
+
     :param plan_json: terraform plan json
     :param jsonpath_expressions: terraform provider variable references filters
     :return: project id list
-
-    Return project id's by references lookup in terraform provider.
     """
+
     project_vars = []
     ret_values = []
 
@@ -94,11 +102,11 @@ def __get_jsonpath_references(plan_json: dict, jsonpath_expressions: List[str]) 
 
 def __get_jsonpath_values(plan_json: dict, jsonpath_expressions: List[str]) -> List[str]:
     """
+    Return project id's by constant value lookup in terraform provider
+
     :param plan_json: terraform plan json
     :param jsonpath_expressions: terraform provider constant value filters
     :return: project id list
-
-    Return project id's by constant value lookup in terraform provider.
     """
 
     ret_values = []
@@ -116,11 +124,11 @@ def __get_jsonpath_values(plan_json: dict, jsonpath_expressions: List[str]) -> L
 
 def __get_terraform_variable(plan_json: dict, terraform_variable: str) -> str:
     """
+    Returns value of terraform string variable
+
     :param plan_json: terraform plan json
     :param terraform_variable: terraform variable to lookup
     :return: terraform variable value
-
-    Returns value of terraform string variable
     """
 
     # print("terraform_variable: {}".format(terraform_variable))
@@ -168,4 +176,4 @@ if __name__ == "__main__":
 
     with open(TF_PLAN_DESTROY) as tfplan_file:
         plan_json = json.load(tfplan_file)
-        print(get_destroy_status(plan_json))
+        print(validate_plan(plan_json))

@@ -38,7 +38,6 @@ def test_patch_invalid():
     url = None
     headers = None
     status = None
-    msg = None
 
     with pytest.raises(TypeError):
         with requests_mock.Mocker() as mock_request:
@@ -53,11 +52,11 @@ def test_patch_valid():
         'Content-type': 'application/vnd.api+json',
     }
     status = "passed"
-    msg = "Tests passed"
+    message = "Tests passed"
 
     with requests_mock.Mocker() as mock_request:
         mock_request.patch("http://localhost:8091", text="OK", status_code=200)
-        response = main.patch(url, headers, status, msg)
+        response = main.patch(url, headers, status, message)
 
     assert response == 200
 

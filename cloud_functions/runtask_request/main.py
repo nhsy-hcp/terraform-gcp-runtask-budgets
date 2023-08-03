@@ -29,7 +29,6 @@ if "WORKSPACE_PREFIX" in os.environ:
 else:
     WORKSPACE_PREFIX = False
 
-
 if "HMAC_KEY" in os.environ:
     HMAC_KEY = os.environ["HMAC_KEY"]
 else:
@@ -56,9 +55,9 @@ if 'LOG_LEVEL' in os.environ:
     logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
 
+
 @functions_framework.http
 def request_handler(request):
-
     try:
         logging.info("headers: " + str(request.headers))
         logging.info("payload: " + str(request.get_data()))
@@ -69,21 +68,21 @@ def request_handler(request):
         http_code = 422
 
         if not HMAC_KEY:
-            msg = "HMAC key environment variable missing on server"
+            http_message = "HMAC key environment variable missing on server"
             http_code = 500
-            logging.error(msg)
+            logging.error(http_message)
         elif not RUNTASK_PROJECT:
-            msg = "Project environment variable missing on server"
+            http_message = "Project environment variable missing on server"
             http_code = 500
-            logging.error(msg)
+            logging.error(http_message)
         elif not RUNTASK_REGION:
-            msg = "Region environment variable missing on server"
+            http_message = "Region environment variable missing on server"
             http_code = 500
-            logging.error(msg)
+            logging.error(http_message)
         elif not RUNTASK_WORKFLOW:
-            msg = "Workflow name environment variable missing on server"
+            http_message = "Workflow name environment variable missing on server"
             http_code = 500
-            logging.error(msg)
+            logging.error(http_message)
         elif request_payload:
             result, msg = __validate_request(request_headers, request_payload)
             if result:
@@ -93,88 +92,89 @@ def request_handler(request):
                 if __validate_hmac(HMAC_KEY, request.get_data(), signature):
                     try:
                         __execute_workflow(request_payload)
-                        msg = "OK"
+                        http_msg = "OK"
                         http_code = 200
                     except Exception as e:
                         http_code = 500
-                        msg = "Workflow execution error"
+                        http_message = "Workflow execution error"
                         logging.error(msg)
                 else:
-                    msg = "HMAC signature invalid"
+                    http_message = "HMAC signature invalid"
                     logging.warning(msg)
         else:
             http_code = 200
-            msg = "Payload missing in request"
+            http_message = "Payload missing in request"
 
-        logging.info(f"{http_code} - {msg}")
+        logging.info(f"{http_code} - {http_message}")
 
-        return msg, http_code
+        return http_message, http_code
 
     except Exception as e:
         logging.exception("Run Task Request error: {}".format(e))
-        msg = "Internal Run Task Request error occurred"
-        status = 500
-        logging.warning(f"{status} - {msg}: {e}")
+        http_message = "Internal Run Task Request error occurred"
+        http_status = 500
+        logging.warning(f"{http_status} - {http_message}: {e}")
 
-        return msg, status
+        return http_message, http_status
+
 
 def __validate_request(headers, payload) -> (bool, str):
     """Validate request values"""
 
     result = True
-    msg = "OK"
+    message = "OK"
 
     if headers is None:
-        msg = "Headers missing in request"
-        logging.warning(msg)
+        message = "Headers missing in request"
+        logging.warning(message)
         result = False
 
     elif payload is None:
-        msg = "Payload missing in request"
-        logging.warning(msg)
+        message = "Payload missing in request"
+        logging.warning(message)
         result = False
 
     elif "x-tfc-task-signature" not in headers:
-        msg = "TFC Task signature missing"
-        logging.warning(msg)
+        message = "TFC Task signature missing"
+        logging.warning(message)
         result = False
 
     elif "organization_name" not in payload.keys():
-        msg = "TFC payload missing : organization_name"
-        logging.warning(msg)
+        message = "TFC payload missing : organization_name"
+        logging.warning(message)
         result = False
 
     elif "stage" not in payload.keys():
-        msg = "TFC payload missing : stage"
-        logging.warning(msg)
+        message = "TFC payload missing : stage"
+        logging.warning(message)
         result = False
 
     elif "workspace_name" not in payload.keys():
-        msg = "TFC payload missing : workspace_name"
-        logging.warning(msg)
+        message = "TFC payload missing : workspace_name"
+        logging.warning(message)
         result = False
 
     elif "plan_json_api_url" not in payload.keys():
-        msg = "TFC payload missing : plan_json_api_url"
-        logging.warning(msg)
+        message = "TFC payload missing : plan_json_api_url"
+        logging.warning(message)
         result = False
 
     elif TFC_ORG and payload["organization_name"] != TFC_ORG:
-        msg = "TFC Org verification failed : {}".format(payload["organization_name"])
-        logging.warning(msg)
+        message = "TFC Org verification failed : {}".format(payload["organization_name"])
+        logging.warning(message)
         result = False
 
     elif WORKSPACE_PREFIX and not (str(payload["workspace_name"]).startswith(WORKSPACE_PREFIX)):
-        msg = "TFC workspace prefix verification failed : {}".format(payload["workspace_name"])
-        logging.warning(msg)
+        message = "TFC workspace prefix verification failed : {}".format(payload["workspace_name"])
+        logging.warning(message)
         result = False
 
     elif RUNTASK_STAGES and not (payload["stage"] in RUNTASK_STAGES):
-        msg = "TFC Runtask stage verification failed: {}".format(payload["stage"])
-        logging.warning(msg)
+        message = "TFC Runtask stage verification failed: {}".format(payload["stage"])
+        logging.warning(message)
         result = False
 
-    return result, msg
+    return result, message
 
 
 def __validate_hmac(key: str, payload: str, signature: str) -> bool:
@@ -189,18 +189,15 @@ def __validate_hmac(key: str, payload: str, signature: str) -> bool:
     return result
 
 
-def __execute_workflow(payload: dict, project: str = RUNTASK_PROJECT, location: str = RUNTASK_REGION, workflow: str = RUNTASK_WORKFLOW) -> Execution:
-    """Execute a workflow and print the execution results.
+def __execute_workflow(payload: dict, project: str = RUNTASK_PROJECT, location: str = RUNTASK_REGION,
+                       workflow: str = RUNTASK_WORKFLOW) -> Execution:
+    """
+    Execute a workflow and print the execution results
 
-    A workflow consists of a series of steps described using the Workflows syntax, and can be written in either YAML or JSON.
-
-    Args:
-        project: The Google Cloud project id which contains the workflow to execute.
-        location: The location for the workflow
-        workflow: The ID of the workflow to execute.
-
-    Returns:
-        The execution response.
+    :param project: The Google Cloud project id which contains the workflow to execute.
+    :param location: The location for the workflow
+    :param workflow: The ID of the workflow to execute.
+    :return:
     """
 
     arguments = payload

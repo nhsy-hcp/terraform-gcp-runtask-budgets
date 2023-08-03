@@ -18,6 +18,6 @@ def test_get_project_ids(plan_json):
     assert len(project_ids) > 0
 
 def test_validate_plan(plan_json):
-    result, msg = terraformplan.validate_plan(plan_json)
+    result, message = terraformplan.validate_plan(plan_json)
     assert type(result) == bool
-    assert type(msg) == str
+    assert type(message) == str

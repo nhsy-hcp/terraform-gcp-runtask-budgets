@@ -17,20 +17,21 @@ if 'LOG_LEVEL' in os.environ:
     logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
 
+
 @functions_framework.http
 def callback_handler(request):
-
     try:
         logging.info("headers: " + str(request.headers))
         logging.info("payload: " + str(request.get_data()))
 
         headers = request.headers
         payload = request.get_json(silent=True)
-        msg = "Error"
+        http_message = "Error"
+        http_status = ""
 
         if payload:
             # Validate request
-            request_valid, msg = validate_request(payload)
+            request_valid, message = validate_request(payload)
 
             if request_valid:
                 # Send runtask callback response to TFC
@@ -43,62 +44,63 @@ def callback_handler(request):
                     'Content-type': 'application/vnd.api+json',
                 }
 
-                status = str(payload["result"]["status"])
-                message = str(payload["result"]["message"])
+                patch_status = str(payload["result"]["status"])
+                patch_message = str(payload["result"]["message"])
 
                 logging.info("headers: {}".format(str(headers)))
                 logging.info("payload: {}".format(json.dumps(payload)))
 
-                patch(endpoint, headers, status, message)
+                patch(endpoint, headers, patch_status, patch_message)
 
-                msg = "OK"
-                status = 200
+                http_message = "OK"
+                http_status = 200
         else:
-            msg = "Payload missing in request"
-            status = 422
-            logging.warning(msg)
+            http_message = "Payload missing in request"
+            http_status = 422
+            logging.warning(http_message)
 
-        return msg, status
+        return http_message, http_status
 
     except Exception as e:
         logging.exception("Run Task Callback error: {}".format(e))
-        msg = "Internal Run Task Callback error occurred"
-        status = 500
-        logging.warning(f"{status} - {msg}: {e}")
+        http_message = "Internal Run Task Callback error occurred"
+        http_status = 500
+        logging.warning(f"{http_status} - {http_message}: {e}")
 
-        return msg, status
+        return http_message, http_status
+
 
 def validate_request(payload: dict) -> (bool, str):
     """Validate request values"""
 
     result = True
-    msg = None
+    message = None
 
     if "task" not in payload:
-        msg = "Task detail missing in request"
-        logging.warning(msg)
+        message = "Task detail missing in request"
+        logging.warning(message)
         result = False
 
     elif "result" not in payload:
-        msg = "Result detail missing in request"
-        logging.warning(msg)
+        message = "Result detail missing in request"
+        logging.warning(message)
         result = False
 
-    return result, msg
+    return result, message
 
 
-def patch(url: str, headers: dict, status: str, msg: str) -> int:
+def patch(url: str, headers: dict, patch_status: str, patch_message: str) -> int:
     """Calls back to TFC with the result of the run task"""
 
     # For details of payload and request see
     # https://developer.hashicorp.com/terraform/cloud-docs/api-docs/run-tasks/run-tasks-integration#run-task-callback
-    if url and headers and status:
+    if url and headers and patch_status:
         payload = {
             "data": {
                 "type": "task-results",
                 "attributes": {
-                    "status": status,
-                    "message": msg
+                    "status": patch_status,
+                    "message": patch_message
                 },
             }
         }
