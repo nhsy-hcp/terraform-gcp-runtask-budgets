@@ -28,17 +28,16 @@ def test_process_integration():
     session = requests.Session()
     session.mount(url, retry_adapter)
 
-    payload = {
-        "organization_name": "00000",
-        "stage": "test",
-        "workspace_name": "00000"
+    data = {
+        "access_token": "00000",
+        "plan_json_api_url": "00000",
     }
 
-    response = session.post(url, json=payload)
+    response = session.post(url, json=data)
 
     # Stop the functions framework process
     process.kill()
     process.wait()
 
     assert response.status_code == 200
-    assert response.text == ('{"message":"Google Cloud Runtask Budgets - Google project label lookup failed","status":"failed"}\n')
+    assert response.text == ('{"message":"TFC plan download failed","status":"failed"}\n')

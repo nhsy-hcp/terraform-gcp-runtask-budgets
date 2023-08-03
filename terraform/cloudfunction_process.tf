@@ -30,7 +30,7 @@ resource "google_cloudfunctions2_function" "runtask_process" {
 
   service_config {
     available_cpu                    = "1"
-    available_memory                 = "128Mi"
+    available_memory                 = "256Mi"
     ingress_settings                 = "ALLOW_ALL"
     max_instance_count               = 1
     max_instance_request_concurrency = 3

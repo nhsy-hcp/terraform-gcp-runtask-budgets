@@ -34,19 +34,35 @@ def process_handler(request):
         payload = request.get_json(silent=True)
         http_msg = "{}"
 
+        # Check if payload is valid
         if payload and ("access_token" in payload and "plan_json_api_url" in payload):
             access_token = payload["access_token"]
             plan_json_api_url = payload["plan_json_api_url"]
 
-            project_ids, msg = __get_project_ids(access_token, plan_json_api_url)
+            # Download terraform plan from TFC
+            plan_json, plan_json_msg = __get_plan_json(access_token, plan_json_api_url)
 
-            if project_ids:
-                validate_result, validate_msg = __validate_project_ids(project_ids)
+            if plan_json:
+                project_ids, project_ids_msg = __get_project_ids(plan_json)
+                validate_plan_result, validate_plan_msg = __validate_plan(plan_json)
+
+                # Destroy plan overrides
+                if validate_plan_result:
+                    validate_result = True
+                    validate_msg = validate_plan_msg
+                # Projects ids  found in terraform plan
+                elif project_ids:
+                    validate_result, validate_msg = __validate_project_ids(project_ids)
+                # Error occurred return message
+                else:
+                    validate_result = False
+                    validate_msg = project_ids_msg
+            # Error occurred return message
             else:
                 validate_result = False
-                validate_msg = msg
+                validate_msg = plan_json_msg
 
-            runtask_msg = "Google Cloud Runtask Budgets - {}".format(validate_msg)
+            runtask_msg = validate_msg
 
             if validate_result:
                 runtask_status = "passed"
@@ -54,7 +70,6 @@ def process_handler(request):
                 runtask_status = "failed"
 
             http_msg = {"message": runtask_msg, "status": runtask_status}
-
             http_code = 200
 
         else:
@@ -65,7 +80,7 @@ def process_handler(request):
         logging.info(f"{http_code} - {http_msg}")
 
         return http_msg, http_code
-
+    # Error occurred return message
     except Exception as e:
         logging.exception("Run Task Process error: {}".format(e))
         msg = "Internal Run Task Process error occurred"
@@ -73,6 +88,19 @@ def process_handler(request):
         logging.warning(f"{status} - {msg}: {e}")
 
         return msg, status
+
+
+def __validate_plan(plan_json) -> (bool, str):
+    """
+    :param plan_json: terraform plan json string
+    :return: true if resources are destroyed only, false otherwise
+
+    Check if plan is a destroy or noop plan and override project flags
+    """
+    validate_plan_result, validate_plan_msg = terraformplan.validate_plan(plan_json)
+    message = "TFC deployments override: {}".format(validate_plan_msg)
+
+    return validate_plan_result, message
 
 
 def __validate_project_ids(project_ids: List[str]) -> (bool, str):
@@ -99,17 +127,29 @@ def __validate_project_ids(project_ids: List[str]) -> (bool, str):
     return result, msg
 
 
-def __get_project_ids(access_token, plan_json_api_url) -> (List[str], str):
+def __get_project_ids(plan_json) -> (List[str], str):
     msg = ""
     project_ids = []
 
     try:
-        plan_json = terraformcloud.download_json_plan(access_token, plan_json_api_url)
-        # logging.info("plan_json: " + str(plan_json))
         project_ids = terraformplan.get_project_ids(plan_json)
         logging.info("project_ids: " + str(project_ids))
     except Exception as e:
         logging.warning("Warning: {}".format(e))
-        msg = "TFC plan download or parse failed"
+        msg = "TFC plan parse failed"
 
     return project_ids, msg
+
+
+def __get_plan_json(access_token, plan_json_api_url) -> (dict, str):
+    msg = ""
+    plan_json = {}
+
+    try:
+        plan_json = terraformcloud.download_json_plan(access_token, plan_json_api_url)
+        # logging.info("plan_json: " + str(plan_json))
+    except Exception as e:
+        logging.warning("Warning: {}".format(e))
+        msg = "TFC plan download failed"
+
+    return plan_json, msg
