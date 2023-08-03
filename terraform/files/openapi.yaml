@@ -1,0 +1,29 @@
+# openapi2-functions.yaml
+swagger: '2.0'
+info:
+  title: apigw-runtasks
+  description: Google Budgets Run Tasks API
+  version: 1.0.0
+schemes:
+  - https
+produces:
+  - application/json
+paths:
+  /runtask-budgets:
+    post:
+      operationId: runtask-request
+      x-google-backend:
+        address: ${request_url}
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: string
+        '422':
+          description: JSON Schema validation error
+          schema:
+            type: string
+        '500':
+          description: Error
+          schema:
+            type: string

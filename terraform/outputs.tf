@@ -13,3 +13,7 @@ output "runtask_request_uri" {
 output "cloud_functions_bucket" {
   value = google_storage_bucket.cloud_functions.id
 }
+
+output "api_gateway_uri" {
+  value = google_api_gateway_gateway.runtasks.default_hostname
+}
