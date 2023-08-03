@@ -55,3 +55,13 @@ resource "google_cloud_run_service_iam_member" "runtask_process_cloud_run_invoke
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.workflow_runtasks.email}"
 }
+
+check "cloudfunction_process_health" {
+  data "http" "cloudfunction_process" {
+    url = google_cloudfunctions2_function.runtask_process.url
+  }
+  assert {
+    condition     = data.http.cloudfunction_process.status_code == 403
+    error_message = format("Cloud function request unhealthy: %s - %s", data.http.cloudfunction_process.status_code, data.http.cloudfunction_process.response_body)
+  }
+}

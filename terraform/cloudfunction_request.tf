@@ -45,13 +45,13 @@ resource "google_cloudfunctions2_function" "runtask_request" {
   }
 }
 
-# IAM entry for all users to invoke the function
+# IAM entry for apigw to invoke the function
 resource "google_cloudfunctions2_function_iam_member" "runtask_request_invoker" {
   project        = google_cloudfunctions2_function.runtask_request.project
   location       = google_cloudfunctions2_function.runtask_request.location
   cloud_function = google_cloudfunctions2_function.runtask_request.name
   role           = "roles/cloudfunctions.invoker"
-  member         = "allUsers"
+  member         = "serviceAccount:${google_service_account.apigw_runtasks.email}"
 }
 
 resource "google_cloud_run_service_iam_member" "runtask_request_cloud_run_invoker" {
@@ -59,7 +59,7 @@ resource "google_cloud_run_service_iam_member" "runtask_request_cloud_run_invoke
   location = google_cloudfunctions2_function.runtask_request.location
   service  = google_cloudfunctions2_function.runtask_request.name
   role     = "roles/run.invoker"
-  member   = "allUsers"
+  member   = "serviceAccount:${google_service_account.apigw_runtasks.email}"
 }
 
 check "cloudfunction_request_health" {
@@ -67,7 +67,7 @@ check "cloudfunction_request_health" {
     url = google_cloudfunctions2_function.runtask_request.url
   }
   assert {
-    condition     = data.http.cloudfunction_request.status_code == 200
+    condition     = data.http.cloudfunction_request.status_code == 403
     error_message = format("Cloud function request unhealthy: %s - %s", data.http.cloudfunction_request.status_code, data.http.cloudfunction_request.response_body)
   }
 }
