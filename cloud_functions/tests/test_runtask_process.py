@@ -25,7 +25,7 @@ def test_process_handler():
     req = Mock(get_json=Mock(return_value=data), args=data)
     assert main.process_handler(req) == (
         {
-            "message": "Google Cloud Runtask Budgets - TFC plan download or parse failed",
+            "message": "TFC plan download failed",
             "status": "failed",
         },
         200,

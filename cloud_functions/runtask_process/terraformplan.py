@@ -1,8 +1,35 @@
 import json
+import logging
 import os
 from typing import List
 
 from jsonpath_ng.ext import parse
+
+
+def validate_plan(plan_json: dict) -> (bool, str):
+
+    jsonpath_expression = "$.resource_changes[*].change.actions[*]"
+    matches = [match.value for match in parse(jsonpath_expression).find(plan_json)]
+    # print("matches: {}".format(matches))
+    resources = __list_to_dict_with_counts(matches)
+    # print("resources: {}".format(resources))
+    # print("plan_json: {}".format(plan_json))
+    msg = []
+
+    for key, value in resources.items():
+        key_str = str(key)
+        value_str = str(value)
+        msg.append(f"{key_str}: {value_str}")
+
+    result_msg = ", ".join(msg)
+    # print("result_msg: {}".format(result_msg))
+
+    if len(resources.keys()) == 0:
+        return True, "noop"
+    elif list(resources.keys()) == ["delete"]:
+        return True, result_msg
+    else:
+        return False, result_msg
 
 
 def get_project_ids(plan_json: dict) -> List[str]:
@@ -33,10 +60,10 @@ def get_project_ids(plan_json: dict) -> List[str]:
     return unique_project_ids
 
 
-def __get_jsonpath_references(plan_json: dict, json_expressions: List[str]) -> List[str]:
+def __get_jsonpath_references(plan_json: dict, jsonpath_expressions: List[str]) -> List[str]:
     """
     :param plan_json: terraform plan json
-    :param json_expressions: terraform provider variable references filters
+    :param jsonpath_expressions: terraform provider variable references filters
     :return: project id list
 
     Return project id's by references lookup in terraform provider.
@@ -44,10 +71,10 @@ def __get_jsonpath_references(plan_json: dict, json_expressions: List[str]) -> L
     project_vars = []
     ret_values = []
 
-    for json_expression in json_expressions:
+    for jsonpath_expression in jsonpath_expressions:
         # print("json_expression: {}".format(json_expression))
         json_expression_project_vars = __flatten_list(
-            [match.value for match in parse(json_expression).find(plan_json)]
+            [match.value for match in parse(jsonpath_expression).find(plan_json)]
         )
         # print("json_expression_project_vars: {}".format(json_expression_project_vars))
         project_vars.extend(json_expression_project_vars)
@@ -65,10 +92,10 @@ def __get_jsonpath_references(plan_json: dict, json_expressions: List[str]) -> L
     return ret_values
 
 
-def __get_jsonpath_values(plan_json: dict, json_expressions: List[str]) -> List[str]:
+def __get_jsonpath_values(plan_json: dict, jsonpath_expressions: List[str]) -> List[str]:
     """
     :param plan_json: terraform plan json
-    :param json_expressions: terraform provider constant value filters
+    :param jsonpath_expressions: terraform provider constant value filters
     :return: project id list
 
     Return project id's by constant value lookup in terraform provider.
@@ -76,9 +103,9 @@ def __get_jsonpath_values(plan_json: dict, json_expressions: List[str]) -> List[
 
     ret_values = []
 
-    for json_expression in json_expressions:
+    for jsonpath_expression in jsonpath_expressions:
         # print(json_expression)
-        items = [match.value for match in parse(json_expression).find(plan_json)]
+        items = [match.value for match in parse(jsonpath_expression).find(plan_json)]
         ret_values.extend(items)
 
     unique_ret_values = __unique_list(ret_values)
@@ -118,10 +145,27 @@ def __unique_list(lst: List[str]) -> List[str]:
     return list(dict.fromkeys(lst))
 
 
+def __list_to_dict_with_counts(input_list: List[str]) -> dict:
+    result_dict = {}
+
+    for item in input_list:
+        if item in result_dict:
+            result_dict[item] += 1
+        else:
+            result_dict[item] = 1
+
+    return result_dict
+
+
 if __name__ == "__main__":
     TERRAFORM_BASE = f"{os.path.dirname(__file__)}/../terraform"
     TF_PLAN = f"{os.path.dirname(__file__)}/tests/tfplan.json"
+    TF_PLAN_DESTROY = f"{os.path.dirname(__file__)}/tests/tfplan-destroy.json"
 
     with open(TF_PLAN) as tfplan_file:
         plan_json = json.load(tfplan_file)
         print(get_project_ids(plan_json))
+
+    with open(TF_PLAN_DESTROY) as tfplan_file:
+        plan_json = json.load(tfplan_file)
+        print(get_destroy_status(plan_json))
