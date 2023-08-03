@@ -26,8 +26,8 @@ def test_request():
 
 
 def test__validate_request(test_request):
-    result, msg = main.__validate_request(test_request["headers"], test_request["payload"])
-    assert msg == "OK"
+    result, message = main.__validate_request(test_request["headers"], test_request["payload"])
+    assert message == "OK"
     assert result == True
 
 
