@@ -15,5 +15,9 @@ output "cloud_functions_bucket" {
 }
 
 output "api_gateway_uri" {
-  value = google_api_gateway_gateway.runtasks.default_hostname
+  value = "https://${google_api_gateway_gateway.runtasks.default_hostname}"
+}
+
+output "api_gateway_endpoint_uri" {
+  value = "https://${google_api_gateway_gateway.runtasks.default_hostname}/runtask-budgets"
 }

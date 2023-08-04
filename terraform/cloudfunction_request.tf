@@ -18,7 +18,7 @@ resource "google_cloudfunctions2_function" "runtask_request" {
   location    = var.region
 
   build_config {
-    runtime     = "python310"
+    runtime     = "python311"
     entry_point = "request_handler"
     source {
       storage_source {
@@ -30,7 +30,7 @@ resource "google_cloudfunctions2_function" "runtask_request" {
 
   service_config {
     available_cpu    = "1"
-    available_memory = "128Mi"
+    available_memory = "192Mi"
     environment_variables = {
       HMAC_KEY         = var.hmac_key
       RUNTASK_PROJECT  = var.project_id

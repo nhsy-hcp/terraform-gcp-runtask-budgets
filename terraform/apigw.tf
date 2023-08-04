@@ -2,7 +2,7 @@ resource "google_api_gateway_api" "runtasks" {
   provider = google-beta
 
   api_id       = "apigw-${random_string.suffix.id}"
-  display_name = "API Gateway for TFC Run Tasks"
+  display_name = "TFC Run Tasks ${random_string.suffix.id}"
 }
 
 resource "google_api_gateway_api_config" "runtasks" {
