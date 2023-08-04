@@ -33,7 +33,7 @@ resource "google_cloudfunctions2_function" "runtask_callback" {
     available_memory                 = "192Mi"
     ingress_settings                 = "ALLOW_ALL"
     max_instance_count               = 1
-    max_instance_request_concurrency = 3
+    max_instance_request_concurrency = 10
     service_account_email            = google_service_account.cloud_function_runtasks.email
     timeout_seconds                  = 30
   }

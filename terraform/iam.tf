@@ -16,7 +16,9 @@ resource "google_service_account" "apigw_runtasks" {
 
 # Allow runtask_process cloud function to lookup project labels
 resource "google_project_iam_member" "project_viewer" {
+  for_each = toset(var.project_viewer)
+
   member  = "serviceAccount:${google_service_account.cloud_function_runtask_process.email}"
-  project = var.project_viewer
+  project = each.value
   role    = "roles/browser"
 }
