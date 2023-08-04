@@ -27,7 +27,7 @@ def callback_handler(request):
         headers = request.headers
         payload = request.get_json(silent=True)
         http_message = "Error"
-        http_status = ""
+        http_code = ""
 
         if payload:
             # Validate request
@@ -53,21 +53,21 @@ def callback_handler(request):
                 patch(endpoint, headers, patch_status, patch_message)
 
                 http_message = "OK"
-                http_status = 200
+                http_code = 200
         else:
             http_message = "Payload missing in request"
-            http_status = 422
-            logging.warning(http_message)
+            http_code = 422
+            logging.warning(f"{http_code} - {http_message}")
 
-        return http_message, http_status
+        return http_message, http_code
 
     except Exception as e:
         logging.exception("Run Task Callback error: {}".format(e))
         http_message = "Internal Run Task Callback error occurred"
-        http_status = 500
-        logging.warning(f"{http_status} - {http_message}: {e}")
+        http_code = 500
+        logging.warning(f"{http_code} - {http_message}: {e}")
 
-        return http_message, http_status
+        return http_message, http_code
 
 
 def validate_request(payload: dict) -> (bool, str):

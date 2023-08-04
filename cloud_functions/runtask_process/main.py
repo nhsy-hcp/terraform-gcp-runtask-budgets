@@ -87,10 +87,10 @@ def process_handler(request):
     except Exception as e:
         logging.exception("Run Task Process error: {}".format(e))
         http_message = "Internal Run Task Process error occurred"
-        http_status = 500
-        logging.warning(f"{http_status} - {http_message}: {e}")
+        http_code = 500
+        logging.warning(f"{http_code} - {http_message}: {e}")
 
-        return http_message, http_status
+        return http_message, http_code
 
 
 def __validate_plan(plan_json) -> (bool, str):
