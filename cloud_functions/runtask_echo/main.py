@@ -37,6 +37,6 @@ def echo_handler(request):
     except Exception as e:
         logging.exception("Error: {}".format(e))
         http_message = "Internal error occurred"
-        http_status = 500
+        http_code = 500
 
-        return http_message, http_status
+        return http_message, http_code

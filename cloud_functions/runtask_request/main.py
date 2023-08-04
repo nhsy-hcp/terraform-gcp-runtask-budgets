@@ -84,7 +84,7 @@ def request_handler(request):
             http_code = 500
             logging.error(http_message)
         elif request_payload:
-            result, msg = __validate_request(request_headers, request_payload)
+            result, message = __validate_request(request_headers, request_payload)
             if result:
                 # Check HMAC signature
                 signature = request_headers['x-tfc-task-signature']
@@ -92,15 +92,15 @@ def request_handler(request):
                 if __validate_hmac(HMAC_KEY, request.get_data(), signature):
                     try:
                         __execute_workflow(request_payload)
-                        http_msg = "OK"
+                        http_message = "OK"
                         http_code = 200
                     except Exception as e:
                         http_code = 500
                         http_message = "Workflow execution error"
-                        logging.error(msg)
+                        logging.error(f"{http_code} - {http_message}: {e}")
                 else:
                     http_message = "HMAC signature invalid"
-                    logging.warning(msg)
+                    logging.warning(message)
         else:
             http_code = 200
             http_message = "Payload missing in request"
@@ -112,10 +112,10 @@ def request_handler(request):
     except Exception as e:
         logging.exception("Run Task Request error: {}".format(e))
         http_message = "Internal Run Task Request error occurred"
-        http_status = 500
-        logging.warning(f"{http_status} - {http_message}: {e}")
+        http_code = 500
+        logging.warning(f"{http_code} - {http_message}: {e}")
 
-        return http_message, http_status
+        return http_message, http_code
 
 
 def __validate_request(headers, payload) -> (bool, str):
