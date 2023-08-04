@@ -4,6 +4,8 @@ import pytest
 import requests
 import tftest
 
+from requests.exceptions import HTTPError
+
 BASE_DIR = f"{os.path.dirname(__file__)}/../terraform"
 
 if "DISABLE_DESTROY" in os.environ and os.environ["DISABLE_DESTROY"] == "1":
@@ -88,22 +90,37 @@ def test_apply_outputs(apply):
 def test_apply_cloud_function_callback_uri(apply):
     url = apply["runtask_callback_uri"]
 
-    with pytest.raises(requests.exceptions.HTTPError):
-        with requests.get(url) as r:
-            r.raise_for_status()
+    with pytest.raises(HTTPError) as exc_info:
+        response = requests.get(url)
+        response.raise_for_status()
+
+    assert exc_info.value.response.status_code == 403
 
 
 def test_apply_cloud_function_request_uri(apply):
     url = apply["runtask_request_uri"]
 
-    with requests.get(url) as r:
-        r.raise_for_status()
-        assert r.status_code == 200
+    with pytest.raises(HTTPError) as exc_info:
+        response = requests.get(url)
+        response.raise_for_status()
+
+    assert exc_info.value.response.status_code == 403
 
 
 def test_apply_cloud_function_process_uri(apply):
     url = apply["runtask_process_uri"]
 
-    with pytest.raises(requests.exceptions.HTTPError):
-        with requests.get(url) as r:
-            r.raise_for_status()
+    with pytest.raises(HTTPError) as exc_info:
+        response = requests.get(url)
+        response.raise_for_status()
+
+    assert exc_info.value.response.status_code == 403
+
+
+def test_apply_api_gateway_uri(apply):
+    url = apply["api_gateway_endpoint_uri"]
+
+    response = requests.post(url)
+    response.raise_for_status()
+
+    assert response.status_code == 200
