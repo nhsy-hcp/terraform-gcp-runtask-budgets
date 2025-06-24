@@ -1,8 +1,9 @@
 import json
+import logging
 import os
+
 import functions_framework
 import google.cloud.logging
-import logging
 import requests
 
 # Setup google cloud logging and ignore errors
@@ -13,16 +14,39 @@ if "DISABLE_GOOGLE_LOGGING" not in os.environ:
     except google.auth.exceptions.DefaultCredentialsError:
         pass
 
-if 'LOG_LEVEL' in os.environ:
-    logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
+if "LOG_LEVEL" in os.environ:
+    logging.getLogger().setLevel(os.environ["LOG_LEVEL"])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
+
+
+def __sanitize_headers(headers) -> dict:
+    """Remove sensitive headers from logging"""
+    if not headers:
+        return {}
+
+    try:
+        safe_headers = dict(headers)
+    except (TypeError, ValueError):
+        # Handle Mock objects in tests
+        if hasattr(headers, "items"):
+            safe_headers = dict(headers.items())
+        else:
+            return {}
+
+    sensitive_keys = ["authorization", "x-tfc-task-signature", "x-api-key"]
+
+    for key in list(safe_headers.keys()):
+        if key.lower() in sensitive_keys:
+            safe_headers[key] = "[REDACTED]"
+
+    return safe_headers
 
 
 @functions_framework.http
 def callback_handler(request):
     try:
-        logging.info("headers: " + str(request.headers))
-        logging.info("payload: " + str(request.get_data()))
+        logging.info("headers: " + str(__sanitize_headers(request.headers)))
+        logging.info("payload size: %d bytes", len(request.get_data()))
 
         headers = request.headers
         payload = request.get_json(silent=True)
@@ -40,15 +64,15 @@ def callback_handler(request):
 
                 # Pass access token into header
                 headers = {
-                    'Authorization': f'Bearer {access_token}',
-                    'Content-type': 'application/vnd.api+json',
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-type": "application/vnd.api+json",
                 }
 
                 patch_status = str(payload["result"]["status"])
                 patch_message = str(payload["result"]["message"])
 
-                logging.info("headers: {}".format(str(headers)))
-                logging.info("payload: {}".format(json.dumps(payload)))
+                logging.info("headers: {}".format(str(__sanitize_headers(headers))))
+                logging.info("callback status: %s", patch_status)
 
                 patch(endpoint, headers, patch_status, patch_message)
 
@@ -98,20 +122,28 @@ def patch(url: str, headers: dict, patch_status: str, patch_message: str) -> int
         payload = {
             "data": {
                 "type": "task-results",
-                "attributes": {
-                    "status": patch_status,
-                    "message": patch_message
-                },
+                "attributes": {"status": patch_status, "message": patch_message},
             }
         }
 
         logging.info(json.dumps(headers))
         logging.info(json.dumps(payload))
 
-        with requests.patch(url, json.dumps(payload), headers=headers) as r:
-            logging.info(r)
-            r.raise_for_status()
-
-        return r.status_code
+        try:
+            with requests.patch(
+                url, json.dumps(payload), headers=headers, timeout=30
+            ) as r:
+                logging.info(f"Callback response: {r.status_code}")
+                r.raise_for_status()
+                return r.status_code
+        except requests.exceptions.Timeout:
+            logging.error("Timeout sending callback to TFC")
+            raise
+        except requests.exceptions.HTTPError as e:
+            logging.error(f"HTTP error in callback: {e.response.status_code}")
+            raise
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Request error in callback: {e}")
+            raise
 
     raise TypeError("Missing params")

@@ -1,13 +1,17 @@
 import json
-import pytest
 import os
 import sys
+
+import pytest
+
 sys.path.insert(0, f"{os.path.dirname(__file__)}/../runtask_request")
 
 
-import requests_mock
 from unittest.mock import Mock
+
+import requests_mock
 from runtask_request import main
+
 
 @pytest.fixture(scope="session")
 def test_request():
@@ -26,27 +30,39 @@ def test_request():
 
 
 def test__validate_request(test_request):
-    result, message = main.__validate_request(test_request["headers"], test_request["payload"])
+    result, message = main.__validate_request(
+        test_request["headers"], test_request["payload"]
+    )
     assert message == "OK"
     assert result == True
 
 
 def test_validate_hmac(test_request):
     key = "secret"
-    result = main.__validate_hmac(key, json.dumps(test_request["payload"]).encode("utf-8"), test_request["headers"]["x-tfc-task-signature"])
+    result = main.__validate_hmac(
+        key,
+        json.dumps(test_request["payload"]).encode("utf-8"),
+        test_request["headers"]["x-tfc-task-signature"],
+    )
     assert result == True
 
 
 def test_request_handler_missing():
     data = {}
-    req = Mock(get_json=Mock(return_value=data), args=data)
-    assert main.request_handler(req) == ('Payload missing in request', 200)
+    req = Mock(
+        get_json=Mock(return_value=data),
+        args=data,
+        headers={},
+        get_data=Mock(return_value=b"{}"),
+    )
+    assert main.request_handler(req) == ("Payload missing in request", 200)
 
 
 def test_request_handler_valid(test_request):
     req = Mock(
-            get_json=Mock(return_value=test_request["payload"]),
-            get_data=Mock(return_value=json.dumps(test_request["payload"]).encode("utf-8")),
-            headers=test_request["headers"],
-            args=test_request["payload"].keys())
-    assert main.request_handler(req) == ('Workflow execution error', 500)
+        get_json=Mock(return_value=test_request["payload"]),
+        get_data=Mock(return_value=json.dumps(test_request["payload"]).encode("utf-8")),
+        headers=test_request["headers"],
+        args=test_request["payload"].keys(),
+    )
+    assert main.request_handler(req) == ("Workflow execution error", 500)

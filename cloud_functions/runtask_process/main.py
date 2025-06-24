@@ -1,11 +1,12 @@
 import logging
 import os
+from typing import List
+
 import functions_framework
 import google.cloud.logging
 import googleproject
 import terraformcloud
 import terraformplan
-from typing import List
 
 # Setup google cloud logging and ignore errors if authentication fails
 if "DISABLE_GOOGLE_LOGGING" not in os.environ:
@@ -19,23 +20,98 @@ if "LOG_LEVEL" in os.environ:
     logging.getLogger().setLevel(os.environ["LOG_LEVEL"])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
 
+
+def __sanitize_headers(headers) -> dict:
+    """Remove sensitive headers from logging"""
+    if not headers:
+        return {}
+
+    try:
+        safe_headers = dict(headers)
+    except (TypeError, ValueError):
+        # Handle Mock objects in tests
+        if hasattr(headers, "items"):
+            safe_headers = dict(headers.items())
+        else:
+            return {}
+
+    sensitive_keys = ["authorization", "x-tfc-task-signature", "x-api-key"]
+
+    for key in list(safe_headers.keys()):
+        if key.lower() in sensitive_keys:
+            safe_headers[key] = "[REDACTED]"
+
+    return safe_headers
+
+
+def __validate_request_size(request) -> (bool, str):
+    """Validate incoming request size"""
+    MAX_PAYLOAD_SIZE = 10 * 1024 * 1024  # 10MB limit
+
+    try:
+        content_length = request.content_length
+        if (
+            content_length
+            and isinstance(content_length, int)
+            and content_length > MAX_PAYLOAD_SIZE
+        ):
+            return (
+                False,
+                f"Request too large: {content_length} bytes (max: {MAX_PAYLOAD_SIZE})",
+            )
+    except (TypeError, AttributeError):
+        # Handle Mock objects in tests - assume valid size
+        pass
+
+    return True, "Valid size"
+
+
 if "TFC_PROJECT_LABEL" in os.environ:
     TFC_PROJECT_LABEL = os.environ["TFC_PROJECT_LABEL"]
 else:
     TFC_PROJECT_LABEL = "tfc-deploy"
 
 
+def __validate_process_payload(payload) -> (bool, str):
+    """Comprehensive payload validation"""
+    if not payload:
+        return False, "Empty payload"
+
+    required_fields = ["access_token", "plan_json_api_url"]
+    for field in required_fields:
+        if field not in payload:
+            return False, f"Missing required field: {field}"
+        if not payload[field] or not isinstance(payload[field], str):
+            return False, f"Invalid {field} format"
+
+    # Validate URL format
+    if not payload["plan_json_api_url"].startswith("https://"):
+        return False, "Invalid plan_json_api_url format"
+
+    # Validate access token format (basic check)
+    if len(payload["access_token"]) < 10:
+        return False, "Invalid access_token format"
+
+    return True, "Valid"
+
+
 @functions_framework.http
 def process_handler(request):
     try:
-        logging.info("headers: " + str(request.headers))
-        logging.info("payload: " + str(request.get_data()))
+        logging.info("headers: " + str(__sanitize_headers(request.headers)))
+        logging.info("payload size: %d bytes", len(request.get_data()))
+
+        # Validate request size first
+        size_valid, size_msg = __validate_request_size(request)
+        if not size_valid:
+            return {"message": size_msg, "status": "failed"}, 413
 
         payload = request.get_json(silent=True)
         http_message = "{}"
 
         # Check if payload is valid
-        if payload and ("access_token" in payload and "plan_json_api_url" in payload):
+        payload_valid, payload_msg = __validate_process_payload(payload)
+        if payload_valid:
             access_token = payload["access_token"]
             plan_json_api_url = payload["plan_json_api_url"]
 
@@ -74,7 +150,7 @@ def process_handler(request):
             http_code = 200
 
         else:
-            runtask_message = "Payload missing in request"
+            runtask_message = payload_msg
             runtask_status = "failed"
             http_message = {"message": runtask_message, "status": runtask_status}
             http_code = 422
@@ -108,6 +184,18 @@ def __validate_plan(plan_json) -> (bool, str):
 
 
 def __validate_project_ids(project_ids: List[str]) -> (bool, str):
+    """
+    Validates a list of project IDs by checking if the TFC deployments are enabled for each project.
+
+    Parameters:
+        project_ids (List[str]): A list of project IDs to validate.
+
+    Returns:
+        Tuple[bool, str]: A tuple containing a boolean indicating if the validation was successful and a string message.
+
+    Raises:
+        Exception: If there is an error while performing the validation.
+    """
     result = False
     disabled_project_ids = []
 
@@ -119,19 +207,35 @@ def __validate_project_ids(project_ids: List[str]) -> (bool, str):
                 disabled_project_ids.append(project_id)
 
         if disabled_project_ids:
-            message = "TFC deployments disabled: {}".format(", ".join(disabled_project_ids))
+            message = "TFC deployments disabled: {}".format(
+                ", ".join(disabled_project_ids)
+            )
         else:
             message = "TFC deployments enabled: {}".format(", ".join(project_ids))
             result = True
 
     except Exception as e:
         logging.exception("Warning: {}".format(e))
-        message = "Google project label lookup failed: {}".format(", ".join(project_ids))
+        message = "Google project label lookup failed: {}".format(
+            ", ".join(project_ids)
+        )
 
     return result, message
 
 
 def __get_project_ids(plan_json: dict) -> (List[str], str):
+    """
+    Get the project IDs from the given plan JSON.
+
+    Args:
+        plan_json (dict): The plan JSON containing the project IDs.
+
+    Returns:
+        tuple: A tuple containing a list of project IDs and a message string.
+            - project_ids (List[str]): A list of project IDs extracted from the plan JSON.
+            - message (str): A message string indicating the success or failure of the operation.
+    """
+
     message = ""
     project_ids = []
 
@@ -146,6 +250,19 @@ def __get_project_ids(plan_json: dict) -> (List[str], str):
 
 
 def __get_plan_json(access_token: str, plan_json_api_url: str) -> (dict, str):
+    """
+    Retrieves the JSON representation of a Terraform plan from the Terraform Cloud API.
+
+    Args:
+        access_token (str): The access token to authenticate with the Terraform Cloud API.
+        plan_json_api_url (str): The URL of the Terraform plan JSON API.
+
+    Returns:
+        tuple: A tuple containing the plan JSON dictionary and a message string.
+               The plan JSON dictionary represents the retrieved Terraform plan.
+               The message string contains an error message if the plan download failed, otherwise it is an empty string.
+    """
+
     message = ""
     plan_json = {}
 

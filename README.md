@@ -50,6 +50,8 @@ Pre-requisites for TFC Run Task deployment only:
 Additional pre-requisites for cloud function development:
 - Python 3.10+
 - Python IDE, e.g. PyCharm
+- pytest for running unit tests
+- requests library for HTTP client functionality
 
 ## Deploy
 ### Google Cloud
@@ -116,10 +118,93 @@ make destroy
 
 ## Run Task Development
 The cloud functions for this TFC Run Task are in the folders below:
-- [callback](cloud_functions/runtask_callback)
-- [process](cloud_functions/runtask_process)
-- [request](cloud_functions/runtask_request)
+- [callback](cloud_functions/runtask_callback) - Posts results back to Terraform Cloud
+- [process](cloud_functions/runtask_process) - Downloads plan JSON, validates deployments
+- [request](cloud_functions/runtask_request) - Validates webhooks, triggers async processing
+- [echo](cloud_functions/runtask_echo) - Debug/testing utility function
 
-Cloud Function pytests have been created in the folder [cloud_functions/tests](cloud_functions/tests) to aid local development and unit testing.
+### Development Commands
+
+Each cloud function supports local development with the following commands:
+```bash
+cd cloud_functions/runtask_*
+make run      # Start local development server
+make build    # Build container with buildpacks
+make test     # Test locally with curl
+```
+
+### Testing
+
+**Unit Tests:**
+```bash
+cd cloud_functions/tests
+pytest -v
+```
+
+**Integration Tests:**
+```bash
+cd tests
+pytest -v
+```
+
+Cloud Function pytests have been created in the folder [cloud_functions/tests](cloud_functions/tests) to aid local development and unit testing. All tests include comprehensive coverage of:
+- Input validation
+- Error handling
+- Security features
+- Mock object compatibility
 
 Terraform pytests have been created in the folder [tests](tests) to deploy, test and destroy resources.
+
+### Security Testing
+
+The test suite includes security-focused test cases:
+- Sensitive data sanitization verification
+- Request size limit validation
+- HMAC signature validation
+- Input validation boundary testing
+
+Run security-specific tests:
+```bash
+pytest -v -k "security or validation or sanitiz"
+```
+
+## Configuration
+
+### Environment Variables
+
+The following environment variables can be configured for enhanced security and performance:
+
+**Security Settings:**
+- `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
+- `DISABLE_SENSITIVE_LOGGING`: Set to 'true' to disable sensitive data logging
+- `MAX_REQUEST_SIZE`: Maximum request payload size in bytes (default: 10MB)
+
+**Performance Settings:**
+- `HTTP_TIMEOUT`: HTTP request timeout in seconds (default: 30)
+- `MAX_CONCURRENT_REQUESTS`: Maximum concurrent request limit (default: 100)
+
+**Feature Flags:**
+- `ENABLE_STRUCTURED_LOGGING`: Enable structured JSON logging (default: false)
+- `ENABLE_PERFORMANCE_MONITORING`: Enable performance metrics (default: false)
+
+### Required Environment Variables
+
+**For Cloud Functions:**
+- `HMAC_KEY`: Terraform Cloud webhook validation key
+- `TFC_ORG`: Terraform Cloud organization filter
+- `WORKSPACE_PREFIX`: Workspace name filter
+- `RUNTASK_PROJECT`: Google Cloud project for resources
+- `TFC_PROJECT_LABEL`: Project label to check (default: "tfc-deploy")
+
+## Troubleshooting
+
+### Common Issues
+
+**Authentication Errors:**
+- Verify HMAC_KEY matches Terraform Cloud configuration
+- Check TFC_ORG and WORKSPACE_PREFIX settings
+- Ensure Google Cloud credentials are properly configured
+
+### Debug Mode
+
+Enable debug logging by setting `LOG_LEVEL=DEBUG` environment variable for detailed troubleshooting information.

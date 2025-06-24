@@ -1,9 +1,9 @@
 import json
 import os
+
 import pytest
 import requests
 import tftest
-
 from requests.exceptions import HTTPError
 
 BASE_DIR = f"{os.path.dirname(__file__)}/../terraform"
@@ -56,30 +56,40 @@ def test_variables(plan):
 
 @pytest.mark.plan
 def test_plan_gcs_cloud_function(plan):
-    res = plan.resources['google_storage_bucket.cloud_functions']
-    assert 'google_storage_bucket.cloud_functions' in plan.resources
-    assert res['values']['location'] == plan.variables['region'].upper()
-    assert res['values']['uniform_bucket_level_access'] == True
+    res = plan.resources["google_storage_bucket.cloud_functions"]
+    assert "google_storage_bucket.cloud_functions" in plan.resources
+    assert res["values"]["location"] == plan.variables["region"].upper()
+    assert res["values"]["uniform_bucket_level_access"] == True
 
 
 def test_state_gcs_cloud_function(state):
-    id = state.resources["None.random_string.suffix"]['instances'][0]['attributes']['id']
-    gcs_id = state.resources["None.google_storage_bucket.cloud_functions"]['instances'][0]['attributes']['id']
+    id = state.resources["None.random_string.suffix"]["instances"][0]["attributes"][
+        "id"
+    ]
+    gcs_id = state.resources["None.google_storage_bucket.cloud_functions"]["instances"][
+        0
+    ]["attributes"]["id"]
     assert gcs_id == "runtask-cloud-functions-{}".format(id)
 
 
 def test_state_cloud_function_callback(state):
-    cloud_function_state = state.resources["None.google_cloudfunctions2_function.runtask_callback"]['instances'][0]['attributes']['state']
+    cloud_function_state = state.resources[
+        "None.google_cloudfunctions2_function.runtask_callback"
+    ]["instances"][0]["attributes"]["state"]
     assert cloud_function_state == "ACTIVE"
 
 
 def test_state_cloud_function_process(state):
-    cloud_function_state = state.resources["None.google_cloudfunctions2_function.runtask_process"]['instances'][0]['attributes']['state']
+    cloud_function_state = state.resources[
+        "None.google_cloudfunctions2_function.runtask_process"
+    ]["instances"][0]["attributes"]["state"]
     assert cloud_function_state == "ACTIVE"
 
 
 def test_state_cloud_function_request(state):
-    cloud_function_state = state.resources["None.google_cloudfunctions2_function.runtask_request"]['instances'][0]['attributes']['state']
+    cloud_function_state = state.resources[
+        "None.google_cloudfunctions2_function.runtask_request"
+    ]["instances"][0]["attributes"]["state"]
     assert cloud_function_state == "ACTIVE"
 
 

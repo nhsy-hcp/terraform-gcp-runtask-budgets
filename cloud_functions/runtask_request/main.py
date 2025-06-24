@@ -1,10 +1,10 @@
-import json
-import os
-import functions_framework
-import logging
-import hmac
 import hashlib
+import hmac
+import json
+import logging
+import os
 
+import functions_framework
 import google.cloud.logging
 from google.cloud import workflows_v1
 from google.cloud.workflows import executions_v1
@@ -51,16 +51,66 @@ if "RUNTASK_WORKFLOW" in os.environ:
 else:
     RUNTASK_WORKFLOW = False
 
-if 'LOG_LEVEL' in os.environ:
-    logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
+if "LOG_LEVEL" in os.environ:
+    logging.getLogger().setLevel(os.environ["LOG_LEVEL"])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
+
+
+def __sanitize_headers(headers) -> dict:
+    """Remove sensitive headers from logging"""
+    if not headers:
+        return {}
+
+    try:
+        safe_headers = dict(headers)
+    except (TypeError, ValueError):
+        # Handle Mock objects in tests
+        if hasattr(headers, "items"):
+            safe_headers = dict(headers.items())
+        else:
+            return {}
+
+    sensitive_keys = ["authorization", "x-tfc-task-signature", "x-api-key"]
+
+    for key in list(safe_headers.keys()):
+        if key.lower() in sensitive_keys:
+            safe_headers[key] = "[REDACTED]"
+
+    return safe_headers
+
+
+def __validate_request_size(request) -> (bool, str):
+    """Validate incoming request size"""
+    MAX_PAYLOAD_SIZE = 10 * 1024 * 1024  # 10MB limit
+
+    try:
+        content_length = request.content_length
+        if (
+            content_length
+            and isinstance(content_length, int)
+            and content_length > MAX_PAYLOAD_SIZE
+        ):
+            return (
+                False,
+                f"Request too large: {content_length} bytes (max: {MAX_PAYLOAD_SIZE})",
+            )
+    except (TypeError, AttributeError):
+        # Handle Mock objects in tests - assume valid size
+        pass
+
+    return True, "Valid size"
 
 
 @functions_framework.http
 def request_handler(request):
     try:
-        logging.info("headers: " + str(request.headers))
-        logging.info("payload: " + str(request.get_data()))
+        logging.info("headers: " + str(__sanitize_headers(request.headers)))
+        logging.info("payload size: %d bytes", len(request.get_data()))
+
+        # Validate request size first
+        size_valid, size_msg = __validate_request_size(request)
+        if not size_valid:
+            return size_msg, 413
 
         request_headers = request.headers
         request_payload = request.get_json(silent=True)
@@ -87,7 +137,7 @@ def request_handler(request):
             result, message = __validate_request(request_headers, request_payload)
             if result:
                 # Check HMAC signature
-                signature = request_headers['x-tfc-task-signature']
+                signature = request_headers["x-tfc-task-signature"]
                 # Need to use request.get_data() for hmac digest
                 if __validate_hmac(HMAC_KEY, request.get_data(), signature):
                     try:
@@ -160,12 +210,18 @@ def __validate_request(headers, payload) -> (bool, str):
         result = False
 
     elif TFC_ORG and payload["organization_name"] != TFC_ORG:
-        message = "TFC Org verification failed : {}".format(payload["organization_name"])
+        message = "TFC Org verification failed : {}".format(
+            payload["organization_name"]
+        )
         logging.warning(message)
         result = False
 
-    elif WORKSPACE_PREFIX and not (str(payload["workspace_name"]).startswith(WORKSPACE_PREFIX)):
-        message = "TFC workspace prefix verification failed : {}".format(payload["workspace_name"])
+    elif WORKSPACE_PREFIX and not (
+        str(payload["workspace_name"]).startswith(WORKSPACE_PREFIX)
+    ):
+        message = "TFC workspace prefix verification failed : {}".format(
+            payload["workspace_name"]
+        )
         logging.warning(message)
         result = False
 
@@ -180,17 +236,23 @@ def __validate_request(headers, payload) -> (bool, str):
 def __validate_hmac(key: str, payload: str, signature: str) -> bool:
     """Returns true if the x-tfc-task-signature header matches the SHA512 digest of the payload"""
 
-    digest = hmac.new(bytes(key, 'utf-8'), msg=payload, digestmod=hashlib.sha512).hexdigest()
+    digest = hmac.new(
+        bytes(key, "utf-8"), msg=payload, digestmod=hashlib.sha512
+    ).hexdigest()
     result = hmac.compare_digest(digest, signature)
 
     if not result:
-        logging.warning(f"HMAC mismatch, digest: {digest}, signature: {signature}")
+        logging.warning("HMAC signature validation failed")
 
     return result
 
 
-def __execute_workflow(payload: dict, project: str = RUNTASK_PROJECT, location: str = RUNTASK_REGION,
-                       workflow: str = RUNTASK_WORKFLOW) -> Execution:
+def __execute_workflow(
+    payload: dict,
+    project: str = RUNTASK_PROJECT,
+    location: str = RUNTASK_REGION,
+    workflow: str = RUNTASK_WORKFLOW,
+) -> Execution:
     """
     Execute a workflow and print the execution results
 

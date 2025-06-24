@@ -8,10 +8,16 @@ from jsonpath_ng.ext import parse
 
 def validate_plan(plan_json: dict) -> (bool, str):
     """
-    Validate terraform plan and check for destroy and noop resources
+    Validates a plan JSON and returns a tuple indicating whether the validation was successful
+    and a message with the result.
 
-    :param plan_json: terraform plan json
-    :return: true if terraform plan is a destroy or noop
+    Args:
+        plan_json (dict): The plan JSON to be validated.
+
+    Returns:
+        tuple: A tuple containing a boolean value indicating the validation result and a string
+               message with the result.
+
     """
 
     jsonpath_expression = "$.resource_changes[*].change.actions[*]"
@@ -41,10 +47,13 @@ def validate_plan(plan_json: dict) -> (bool, str):
 
 def get_project_ids(plan_json: dict) -> List[str]:
     """
-    Return project id's by searching google and google-beta providers.
+    Retrieves the project IDs from the given plan JSON.
 
-    :param plan_json: terraform plan json
-    :return: project id list
+    Args:
+        plan_json (dict): The plan JSON containing the configuration provider and project information.
+
+    Returns:
+        List[str]: A list of unique project IDs extracted from the plan JSON.
     """
 
     jsonpath_references_expressions = [
@@ -58,7 +67,9 @@ def get_project_ids(plan_json: dict) -> List[str]:
     ]
 
     project_ids = []
-    project_ids.extend(__get_jsonpath_references(plan_json, jsonpath_references_expressions))
+    project_ids.extend(
+        __get_jsonpath_references(plan_json, jsonpath_references_expressions)
+    )
     project_ids.extend(__get_jsonpath_values(plan_json, jsonpath_values_expressions))
 
     unique_project_ids = __unique_list(project_ids)
@@ -67,13 +78,18 @@ def get_project_ids(plan_json: dict) -> List[str]:
     return unique_project_ids
 
 
-def __get_jsonpath_references(plan_json: dict, jsonpath_expressions: List[str]) -> List[str]:
+def __get_jsonpath_references(
+    plan_json: dict, jsonpath_expressions: List[str]
+) -> List[str]:
     """
-    Return project id's by references lookup in terraform provider.
+    Get the values of JSONPath references in a given JSON object.
 
-    :param plan_json: terraform plan json
-    :param jsonpath_expressions: terraform provider variable references filters
-    :return: project id list
+    Args:
+        plan_json (dict): The JSON object to search for JSONPath references.
+        jsonpath_expressions (List[str]): The list of JSONPath expressions to search for.
+
+    Returns:
+        List[str]: A list of values corresponding to the JSONPath references found in the JSON object.
     """
 
     project_vars = []
@@ -100,13 +116,18 @@ def __get_jsonpath_references(plan_json: dict, jsonpath_expressions: List[str]) 
     return ret_values
 
 
-def __get_jsonpath_values(plan_json: dict, jsonpath_expressions: List[str]) -> List[str]:
+def __get_jsonpath_values(
+    plan_json: dict, jsonpath_expressions: List[str]
+) -> List[str]:
     """
-    Return project id's by constant value lookup in terraform provider
+    Returns a list of unique values extracted from a given JSON object using a list of JSONPath expressions.
 
-    :param plan_json: terraform plan json
-    :param jsonpath_expressions: terraform provider constant value filters
-    :return: project id list
+    Parameters:
+    - `plan_json` (dict): The JSON object from which values will be extracted.
+    - `jsonpath_expressions` (List[str]): A list of JSONPath expressions to extract values from the JSON object.
+
+    Returns:
+    - `List[str]`: A list of unique values extracted from the JSON object using the provided JSONPath expressions.
     """
 
     ret_values = []
@@ -124,17 +145,22 @@ def __get_jsonpath_values(plan_json: dict, jsonpath_expressions: List[str]) -> L
 
 def __get_terraform_variable(plan_json: dict, terraform_variable: str) -> str:
     """
-    Returns value of terraform string variable
+    Retrieve the value of a Terraform variable from a given JSON plan.
 
-    :param plan_json: terraform plan json
-    :param terraform_variable: terraform variable to lookup
-    :return: terraform variable value
+    Args:
+        plan_json (dict): The JSON representation of the Terraform plan.
+        terraform_variable (str): The name of the Terraform variable to retrieve.
+
+    Returns:
+        str: The value of the specified Terraform variable. If the variable is not found, an empty string is returned.
     """
 
     # print("terraform_variable: {}".format(terraform_variable))
     jsonpath_expression = "$.variables.{}.value".format(terraform_variable)
     # print("jsonpath_expression: {}".format(jsonpath_expression))
-    terraform_values = [match.value for match in parse(jsonpath_expression).find(plan_json)]
+    terraform_values = [
+        match.value for match in parse(jsonpath_expression).find(plan_json)
+    ]
     # print("terraform_values: {}".format(terraform_values))
 
     if terraform_values:
@@ -146,14 +172,50 @@ def __get_terraform_variable(plan_json: dict, terraform_variable: str) -> str:
 
 
 def __flatten_list(lst: List[str]) -> List[str]:
-    return [item for sublist in lst for item in (__flatten_list(sublist) if isinstance(sublist, list) else [sublist])]
+    """
+    Recursively flattens a nested list of strings into a single flat list.
+
+    Args:
+        lst (List[str]): The nested list of strings to be flattened.
+
+    Returns:
+        List[str]: The flattened list of strings.
+    """
+
+    return [
+        item
+        for sublist in lst
+        for item in (
+            __flatten_list(sublist) if isinstance(sublist, list) else [sublist]
+        )
+    ]
 
 
 def __unique_list(lst: List[str]) -> List[str]:
+    """
+    Generates a unique list from the given list of strings.
+
+    Args:
+        lst (List[str]): The input list of strings.
+
+    Returns:
+        List[str]: A new list containing only the unique elements from the input list.
+    """
+
     return list(dict.fromkeys(lst))
 
 
 def __list_to_dict_with_counts(input_list: List[str]) -> dict:
+    """
+    Generate a dictionary with the counts of each unique item in the input list.
+
+    Parameters:
+        input_list (List[str]): The list of strings to count the occurrences of.
+
+    Returns:
+        dict: A dictionary where the keys are the unique items in the input list and the values are the counts of each item.
+    """
+
     result_dict = {}
 
     for item in input_list:
