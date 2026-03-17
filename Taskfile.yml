@@ -211,9 +211,21 @@ tasks:
 
   terraform:all:
     desc: "Run fmt -> init -> validate -> apply"
+    cmds:
+      - task: terraform:fmt
+      - task: terraform:init
+      - task: terraform:validate
+      - task: terraform:apply
+
+  terraform:clean:
+    desc: "Clean terraform state and cache"
     dir: terraform
     cmds:
-      - make all
+      - echo "Cleaning terraform state and cache..."
+      - rm -rf .terraform
+      - rm -f .terraform.lock.hcl
+      - rm -f terraform.tfstate*
+      - echo "✓ Terraform cleaned"
 
   # Git Hooks Tasks
 
