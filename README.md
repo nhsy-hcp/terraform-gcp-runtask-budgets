@@ -42,13 +42,13 @@ Pre-requisites for TFC Run Task deployment only:
 - Google Cloud credentials setup
   - gcloud auth application-default login
   - gcloud auth login
-- Makefile
+- [Task](https://taskfile.dev/) (task automation tool)
 - Terraform v1.4+
 - Terraform Cloud account and workspace created
 - Terraform sample deployment to connect to the above workspace
 
 Additional pre-requisites for cloud function development:
-- Python 3.10+
+- Python 3.12+
 - Python IDE, e.g. PyCharm
 
 ## Deploy
@@ -64,13 +64,13 @@ project_viewer = ["__BUDGET_GOOGLE_PROJECT__"]
 
 Navigate to the `terraform` folder in the terminal and execute the commands below to deploy the Google Cloud resources.
 ```bash
-make init
-make plan
-make apply
+task init
+task plan
+task apply
 ```
 or
 ```bash
-make all
+task all
 ```
 ### Terraform Cloud
 [Terraform Cloud](https://app.terraform.io) Run Task set up is required next. Under `Settings/Run tasks` create a Run Task with the following settings:
@@ -111,7 +111,7 @@ output "userinfo" {
 ## Destroy
 All the resources deployed to the Google Cloud project can be destroyed with the single command below.
 ```bash
-make destroy
+task destroy
 ```
 
 ## Run Task Development
@@ -123,3 +123,13 @@ The cloud functions for this TFC Run Task are in the folders below:
 Cloud Function pytests have been created in the folder [cloud_functions/tests](cloud_functions/tests) to aid local development and unit testing.
 
 Terraform pytests have been created in the folder [tests](tests) to deploy, test and destroy resources.
+
+## Changelog
+
+### 2026-03-17
+- **feat**: Upgraded dependencies to Python 3.12 and added Task automation
+- **refactor**: Replaced Terraform Makefile with Taskfile automation
+- **chore**: Upgraded Terraform Google providers to 7.23.0
+- **chore**: Updated pre-commit configuration
+- **style**: Fixed linting issues and improved code quality
+- **chore**: Improved .gitignore with Python best practices
