@@ -1,0 +1,271 @@
+version: '3'
+
+vars:
+  PROJECT_ROOT:
+    sh: pwd
+  VENV_DIR: "{{.PROJECT_ROOT}}/.venv"
+  PYTHON: "{{.VENV_DIR}}/bin/python"
+  PIP: "{{.VENV_DIR}}/bin/pip"
+  PYTEST: "{{.VENV_DIR}}/bin/pytest"
+  TMP_DIR: "{{.PROJECT_ROOT}}/.tmp"
+
+tasks:
+  # Standard Interface Tasks (as per AGENTS.md)
+
+  init:
+    desc: "Perform one-time environment setup (dependencies, hooks, provider initialization)"
+    cmds:
+      - task: deps
+      - task: hooks:install
+      - task: terraform:init
+
+  deps:
+    desc: "Check for required dependencies and validate the local environment"
+    cmds:
+      - task: deps:check
+      - task: deps:install
+
+  deps:check:
+    desc: "Check for required dependencies"
+    cmds:
+      - ./scripts/check-deps.sh
+
+  deps:install:
+    desc: "Install Python dependencies"
+    cmds:
+      - echo "Setting up Python virtual environment..."
+      - python3 -m venv {{.VENV_DIR}}
+      - "{{.PIP}} install --upgrade pip"
+      - "{{.PIP}} install -r cloud_functions/tests/requirements.txt"
+      - "{{.PIP}} install -r tests/requirements.txt"
+      - "{{.PIP}} install pre-commit"
+      - echo "✓ Dependencies installed"
+
+  up:
+    desc: "Start the local development environment"
+    cmds:
+      - echo "Starting local development environment..."
+      - echo "Use 'task cf:run FUNCTION=name' to start a specific cloud function"
+      - echo "Available functions runtask_callback, runtask_echo, runtask_process"
+
+  down:
+    desc: "Stop and tear down the local development environment"
+    cmds:
+      - echo "Stopping local development environment..."
+      - pkill -f "functions-framework" || true
+      - echo "✓ Development environment stopped"
+
+  clean:
+    desc: "Remove build artifacts, temporary files, and cache"
+    cmds:
+      - echo "Cleaning build artifacts and cache..."
+      - rm -rf {{.TMP_DIR}}
+      - rm -rf .pytest_cache
+      - rm -rf cloud_functions/*/.pytest_cache
+      - rm -rf cloud_functions/*/__pycache__
+      - rm -rf cloud_functions/tests/.pytest_cache
+      - rm -rf cloud_functions/tests/__pycache__
+      - rm -rf tests/.pytest_cache
+      - rm -rf tests/__pycache__
+      - rm -rf build
+      - rm -rf terraform/.terraform
+      - rm -f terraform/.terraform.lock.hcl
+      - rm -f bob_shell_exec_command_output
+      - echo "✓ Cleaned"
+
+  lint:
+    desc: "Run all code quality, formatting, and security checks"
+    cmds:
+      - task: lint:pre-commit
+      - task: lint:terraform
+
+  lint:pre-commit:
+    desc: "Run pre-commit hooks on all files"
+    cmds:
+      - echo "Running pre-commit hooks..."
+      - "{{.VENV_DIR}}/bin/pre-commit run --all-files"
+
+  lint:terraform:
+    desc: "Run terraform fmt and validate"
+    dir: terraform
+    cmds:
+      - echo "Running terraform fmt..."
+      - terraform fmt -check -recursive
+      - echo "Running terraform validate..."
+      - terraform validate
+
+  test:
+    desc: "Execute the local unit and integration test suite"
+    cmds:
+      - task: test:cf
+      - task: test:terraform
+
+  test:all:
+    desc: "Run the complete test suite across all modules"
+    cmds:
+      - task: test:cf
+      - task: test:terraform
+
+  test:ci:
+    desc: "Execute the full verification pipeline as defined in CI"
+    cmds:
+      - task: lint
+      - task: test:all
+
+  test:cf:
+    desc: "Run cloud functions tests"
+    dir: cloud_functions/tests
+    cmds:
+      - echo "Running cloud functions tests..."
+      - "{{.PYTEST}} -v --tb=short"
+
+  test:terraform:
+    desc: "Run terraform infrastructure tests"
+    dir: tests
+    cmds:
+      - echo "Running terraform infrastructure tests..."
+      - "{{.PYTEST}} -v --tb=short"
+
+  build:
+    desc: "Build container images for cloud functions"
+    cmds:
+      - task: build:callback
+      - task: build:echo
+      - task: build:process
+
+  build:callback:
+    desc: "Build runtask_callback container"
+    dir: cloud_functions/runtask_callback
+    cmds:
+      - make build
+
+  build:echo:
+    desc: "Build runtask_echo container"
+    dir: cloud_functions/runtask_echo
+    cmds:
+      - make build
+
+  build:process:
+    desc: "Build runtask_process container"
+    dir: cloud_functions/runtask_process
+    cmds:
+      - make build
+
+  # Cloud Functions Development Tasks
+
+  cf:run:
+    desc: "Run a cloud function locally (usage: task cf:run FUNCTION=runtask_callback)"
+    dir: cloud_functions/{{.FUNCTION}}
+    cmds:
+      - make run
+
+  cf:test:
+    desc: "Test a cloud function locally (usage: task cf:test FUNCTION=runtask_callback)"
+    dir: cloud_functions/{{.FUNCTION}}
+    cmds:
+      - make test
+
+  cf:build:
+    desc: "Build a cloud function container (usage: task cf:build FUNCTION=runtask_callback)"
+    dir: cloud_functions/{{.FUNCTION}}
+    cmds:
+      - make build
+
+  # Terraform Tasks
+
+  terraform:init:
+    desc: "Initialize terraform"
+    dir: terraform
+    cmds:
+      - terraform init
+
+  terraform:plan:
+    desc: "Run terraform plan"
+    dir: terraform
+    cmds:
+      - terraform plan
+
+  terraform:apply:
+    desc: "Apply terraform changes"
+    dir: terraform
+    cmds:
+      - terraform apply
+
+  terraform:destroy:
+    desc: "Destroy terraform infrastructure"
+    dir: terraform
+    cmds:
+      - terraform destroy
+
+  terraform:fmt:
+    desc: "Format terraform files"
+    dir: terraform
+    cmds:
+      - terraform fmt -recursive
+
+  terraform:validate:
+    desc: "Validate terraform configuration"
+    dir: terraform
+    cmds:
+      - terraform validate
+
+  terraform:all:
+    desc: "Run fmt -> init -> validate -> apply"
+    dir: terraform
+    cmds:
+      - make all
+
+  # Git Hooks Tasks
+
+  hooks:install:
+    desc: "Install pre-commit hooks"
+    cmds:
+      - echo "Installing pre-commit hooks..."
+      - "{{.VENV_DIR}}/bin/pre-commit install"
+      - echo "✓ Pre-commit hooks installed"
+
+  hooks:update:
+    desc: "Update pre-commit hooks"
+    cmds:
+      - "{{.VENV_DIR}}/bin/pre-commit autoupdate"
+
+  # Utility Tasks
+
+  tmp:create:
+    desc: "Create temporary directory"
+    cmds:
+      - mkdir -p {{.TMP_DIR}}
+    status:
+      - test -d {{.TMP_DIR}}
+
+  plans:create:
+    desc: "Create plans directory"
+    cmds:
+      - mkdir -p {{.PROJECT_ROOT}}/.plans
+    status:
+      - test -d {{.PROJECT_ROOT}}/.plans
+
+  # Documentation Tasks
+
+  docs:terraform:
+    desc: "Generate terraform documentation"
+    dir: terraform
+    cmds:
+      - terraform-docs markdown table --output-file README.md --output-mode inject .
+
+  # Development Workflow Tasks
+
+  dev:setup:
+    desc: "Complete development environment setup"
+    cmds:
+      - task: init
+      - task: tmp:create
+      - task: plans:create
+      - echo "✓ Development environment ready"
+
+  dev:check:
+    desc: "Run all checks before commit"
+    cmds:
+      - task: lint
+      - task: test:all
+      - echo "✓ All checks passed"

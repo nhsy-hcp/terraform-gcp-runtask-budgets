@@ -1,6 +1,6 @@
-functions-framework==3.4.0
-flask==2.3.2
-google-cloud-error-reporting==1.9.2
-google-cloud-logging==3.6.0
-google-cloud-resource-manager==1.10.2
-jsonpath-ng==1.5.3
+functions-framework==3.10.1
+flask==3.1.3
+google-cloud-error-reporting==1.14.0
+google-cloud-logging==3.14.0
+google-cloud-resource-manager==1.16.0
+jsonpath-ng==1.8.0
