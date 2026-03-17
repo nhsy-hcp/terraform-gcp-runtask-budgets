@@ -1,4 +1,3 @@
-import json
 import os
 # import sys
 # sys.path.insert(0, f"{os.path.dirname(__file__)}/../runtask_process")
@@ -17,7 +16,7 @@ def test_process_integration():
         ["functions-framework", "--target", "process_handler", "--port", str(port)],
         cwd=f"{os.path.dirname(__file__)}/../runtask_process",
         stdout=subprocess.PIPE,
-        env=os.environ
+        env=os.environ,
     )
 
     url = f"http://localhost:{port}"
@@ -40,4 +39,6 @@ def test_process_integration():
     process.wait()
 
     assert response.status_code == 200
-    assert response.text == ('{"message":"TFC plan download failed","status":"failed"}\n')
+    assert response.text == (
+        '{"message":"TFC plan download failed","status":"failed"}\n'
+    )

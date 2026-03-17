@@ -25,10 +25,10 @@ def download_json_plan(access_token: str, plan_json_api_url: str) -> dict:
 
 
 if __name__ == "__main__":
-
     access_token = ""
     plan_json_api_url = ""
 
     plan_json = download_json_plan(access_token, plan_json_api_url)
     import terraformplan
+
     print(terraformplan.get_project_ids(plan_json))

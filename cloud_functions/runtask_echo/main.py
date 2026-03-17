@@ -12,13 +12,13 @@ if "DISABLE_GOOGLE_LOGGING" not in os.environ:
         pass
 
 
-if 'LOG_LEVEL' in os.environ:
-    logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
+if "LOG_LEVEL" in os.environ:
+    logging.getLogger().setLevel(os.environ["LOG_LEVEL"])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
+
 
 @functions_framework.http
 def echo_handler(request):
-
     try:
         logging.info("headers: " + str(request.headers))
         logging.info("payload: " + str((request.get_data()).decode("utf-8")))

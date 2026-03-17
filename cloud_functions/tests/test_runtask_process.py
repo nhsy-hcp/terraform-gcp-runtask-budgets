@@ -23,13 +23,19 @@ def test_process_handler():
         "plan_json_api_url": "00000",
     }
     req = Mock(get_json=Mock(return_value=data), args=data)
-    assert main.process_handler(req) == ({"message": "TFC plan download failed", "status": "failed"}, 200)
+    assert main.process_handler(req) == (
+        {"message": "TFC plan download failed", "status": "failed"},
+        200,
+    )
 
 
 def test_process_handler_missing_payload():
     data = {}
     req = Mock(get_json=Mock(return_value=data), args=data)
-    assert main.process_handler(req) == ({'message': 'Payload missing in request', 'status': 'failed'}, 422)
+    assert main.process_handler(req) == (
+        {"message": "Payload missing in request", "status": "failed"},
+        422,
+    )
 
 
 def test_validate_projects_ids(proj):

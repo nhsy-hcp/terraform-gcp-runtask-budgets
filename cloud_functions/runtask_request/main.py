@@ -9,7 +9,6 @@ import google.cloud.logging
 from google.cloud import workflows_v1
 from google.cloud.workflows import executions_v1
 from google.cloud.workflows.executions_v1 import Execution
-from google.cloud.workflows.executions_v1.types import executions
 
 # Setup google cloud logging and ignore errors
 if "DISABLE_GOOGLE_LOGGING" not in os.environ:
@@ -51,8 +50,8 @@ if "RUNTASK_WORKFLOW" in os.environ:
 else:
     RUNTASK_WORKFLOW = False
 
-if 'LOG_LEVEL' in os.environ:
-    logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
+if "LOG_LEVEL" in os.environ:
+    logging.getLogger().setLevel(os.environ["LOG_LEVEL"])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
 
 
@@ -87,7 +86,7 @@ def request_handler(request):
             result, message = __validate_request(request_headers, request_payload)
             if result:
                 # Check HMAC signature
-                signature = request_headers['x-tfc-task-signature']
+                signature = request_headers["x-tfc-task-signature"]
                 # Need to use request.get_data() for hmac digest
                 if __validate_hmac(HMAC_KEY, request.get_data(), signature):
                     try:
@@ -160,16 +159,22 @@ def __validate_request(headers, payload) -> (bool, str):
         result = False
 
     elif TFC_ORG and payload["organization_name"] != TFC_ORG:
-        message = "TFC Org verification failed : {}".format(payload["organization_name"])
+        message = "TFC Org verification failed : {}".format(
+            payload["organization_name"]
+        )
         logging.warning(message)
         result = False
 
-    elif WORKSPACE_PREFIX and not (str(payload["workspace_name"]).startswith(WORKSPACE_PREFIX)):
-        message = "TFC workspace prefix verification failed : {}".format(payload["workspace_name"])
+    elif WORKSPACE_PREFIX and not (
+        str(payload["workspace_name"]).startswith(WORKSPACE_PREFIX)
+    ):
+        message = "TFC workspace prefix verification failed : {}".format(
+            payload["workspace_name"]
+        )
         logging.warning(message)
         result = False
 
-    elif RUNTASK_STAGES and not (payload["stage"] in RUNTASK_STAGES):
+    elif RUNTASK_STAGES and payload["stage"] not in RUNTASK_STAGES:
         message = "TFC Runtask stage verification failed: {}".format(payload["stage"])
         logging.warning(message)
         result = False
@@ -180,7 +185,9 @@ def __validate_request(headers, payload) -> (bool, str):
 def __validate_hmac(key: str, payload: str, signature: str) -> bool:
     """Returns true if the x-tfc-task-signature header matches the SHA512 digest of the payload"""
 
-    digest = hmac.new(bytes(key, 'utf-8'), msg=payload, digestmod=hashlib.sha512).hexdigest()
+    digest = hmac.new(
+        bytes(key, "utf-8"), msg=payload, digestmod=hashlib.sha512
+    ).hexdigest()
     result = hmac.compare_digest(digest, signature)
 
     if not result:
@@ -189,8 +196,12 @@ def __validate_hmac(key: str, payload: str, signature: str) -> bool:
     return result
 
 
-def __execute_workflow(payload: dict, project: str = RUNTASK_PROJECT, location: str = RUNTASK_REGION,
-                       workflow: str = RUNTASK_WORKFLOW) -> Execution:
+def __execute_workflow(
+    payload: dict,
+    project: str = RUNTASK_PROJECT,
+    location: str = RUNTASK_REGION,
+    workflow: str = RUNTASK_WORKFLOW,
+) -> Execution:
     """
     Execute a workflow and print the execution results
 

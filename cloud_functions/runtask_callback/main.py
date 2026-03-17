@@ -13,8 +13,8 @@ if "DISABLE_GOOGLE_LOGGING" not in os.environ:
     except google.auth.exceptions.DefaultCredentialsError:
         pass
 
-if 'LOG_LEVEL' in os.environ:
-    logging.getLogger().setLevel(os.environ['LOG_LEVEL'])
+if "LOG_LEVEL" in os.environ:
+    logging.getLogger().setLevel(os.environ["LOG_LEVEL"])
     logging.info("LOG_LEVEL set to %s" % logging.getLogger().getEffectiveLevel())
 
 
@@ -40,8 +40,8 @@ def callback_handler(request):
 
                 # Pass access token into header
                 headers = {
-                    'Authorization': f'Bearer {access_token}',
-                    'Content-type': 'application/vnd.api+json',
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-type": "application/vnd.api+json",
                 }
 
                 patch_status = str(payload["result"]["status"])
@@ -98,10 +98,7 @@ def patch(url: str, headers: dict, patch_status: str, patch_message: str) -> int
         payload = {
             "data": {
                 "type": "task-results",
-                "attributes": {
-                    "status": patch_status,
-                    "message": patch_message
-                },
+                "attributes": {"status": patch_status, "message": patch_message},
             }
         }
 

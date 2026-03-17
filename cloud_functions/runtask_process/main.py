@@ -119,14 +119,18 @@ def __validate_project_ids(project_ids: List[str]) -> (bool, str):
                 disabled_project_ids.append(project_id)
 
         if disabled_project_ids:
-            message = "TFC deployments disabled: {}".format(", ".join(disabled_project_ids))
+            message = "TFC deployments disabled: {}".format(
+                ", ".join(disabled_project_ids)
+            )
         else:
             message = "TFC deployments enabled: {}".format(", ".join(project_ids))
             result = True
 
     except Exception as e:
         logging.exception("Warning: {}".format(e))
-        message = "Google project label lookup failed: {}".format(", ".join(project_ids))
+        message = "Google project label lookup failed: {}".format(
+            ", ".join(project_ids)
+        )
 
     return result, message
 

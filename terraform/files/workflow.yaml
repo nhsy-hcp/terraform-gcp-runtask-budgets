@@ -1,25 +1,25 @@
 main:
-    params: [input]
-    steps:
+  params: [input]
+  steps:
     - process:
         call: http.post
         args:
-            url: ${process_url}
-            body: $${input}
-            auth:
-                type: OIDC
+          url: ${process_url}
+          body: $${input}
+          auth:
+            type: OIDC
         result: process_result
         next: callback
 
     - callback:
         call: http.post
         args:
-            url: ${callback_url}
-            body:
-                task: $${input}
-                result: $${process_result.body}
-            auth:
-                type: OIDC
+          url: ${callback_url}
+          body:
+            task: $${input}
+            result: $${process_result.body}
+          auth:
+            type: OIDC
         result: callback_result
 
     - complete:

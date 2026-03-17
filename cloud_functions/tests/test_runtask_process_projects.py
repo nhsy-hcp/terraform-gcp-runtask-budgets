@@ -2,6 +2,7 @@ import pytest
 
 from runtask_process import googleproject
 
+
 @pytest.fixture
 def proj() -> googleproject.GoogleProject:
     proj = googleproject.GoogleProject()
@@ -13,6 +14,7 @@ def proj() -> googleproject.GoogleProject:
 def test_project(proj):
     assert proj.project.project_id == proj.default_project_id
     assert "etag" in proj.project
+
 
 def test_project_label_invalid(proj):
     assert proj.label("1234567890") == ""

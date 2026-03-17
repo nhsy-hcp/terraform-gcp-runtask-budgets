@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from typing import List
 
@@ -58,7 +57,9 @@ def get_project_ids(plan_json: dict) -> List[str]:
     ]
 
     project_ids = []
-    project_ids.extend(__get_jsonpath_references(plan_json, jsonpath_references_expressions))
+    project_ids.extend(
+        __get_jsonpath_references(plan_json, jsonpath_references_expressions)
+    )
     project_ids.extend(__get_jsonpath_values(plan_json, jsonpath_values_expressions))
 
     unique_project_ids = __unique_list(project_ids)
@@ -67,7 +68,9 @@ def get_project_ids(plan_json: dict) -> List[str]:
     return unique_project_ids
 
 
-def __get_jsonpath_references(plan_json: dict, jsonpath_expressions: List[str]) -> List[str]:
+def __get_jsonpath_references(
+    plan_json: dict, jsonpath_expressions: List[str]
+) -> List[str]:
     """
     Return project id's by references lookup in terraform provider.
 
@@ -100,7 +103,9 @@ def __get_jsonpath_references(plan_json: dict, jsonpath_expressions: List[str]) 
     return ret_values
 
 
-def __get_jsonpath_values(plan_json: dict, jsonpath_expressions: List[str]) -> List[str]:
+def __get_jsonpath_values(
+    plan_json: dict, jsonpath_expressions: List[str]
+) -> List[str]:
     """
     Return project id's by constant value lookup in terraform provider
 
@@ -134,7 +139,9 @@ def __get_terraform_variable(plan_json: dict, terraform_variable: str) -> str:
     # print("terraform_variable: {}".format(terraform_variable))
     jsonpath_expression = "$.variables.{}.value".format(terraform_variable)
     # print("jsonpath_expression: {}".format(jsonpath_expression))
-    terraform_values = [match.value for match in parse(jsonpath_expression).find(plan_json)]
+    terraform_values = [
+        match.value for match in parse(jsonpath_expression).find(plan_json)
+    ]
     # print("terraform_values: {}".format(terraform_values))
 
     if terraform_values:
@@ -146,7 +153,13 @@ def __get_terraform_variable(plan_json: dict, terraform_variable: str) -> str:
 
 
 def __flatten_list(lst: List[str]) -> List[str]:
-    return [item for sublist in lst for item in (__flatten_list(sublist) if isinstance(sublist, list) else [sublist])]
+    return [
+        item
+        for sublist in lst
+        for item in (
+            __flatten_list(sublist) if isinstance(sublist, list) else [sublist]
+        )
+    ]
 
 
 def __unique_list(lst: List[str]) -> List[str]:
