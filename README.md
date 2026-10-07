@@ -48,29 +48,32 @@ Pre-requisites for TFC Run Task deployment only:
 - Terraform sample deployment to connect to the above workspace
 
 Additional pre-requisites for cloud function development:
-- Python 3.12+
+- Python 3.13+
 - Python IDE, e.g. PyCharm
 
 ## Deploy
 ### Google Cloud
 Create a file in the terraform folder named terraform.tfvars.
 ```hcl
-project_id = "__DEPLOYMENT_GOOGLE_PROJECT__"
+project_id     = "__DEPLOYMENT_GOOGLE_PROJECT__"
 project_viewer = ["__BUDGET_GOOGLE_PROJECT__"]
+hmac_key       = "__RUN_TASK_HMAC_KEY__"
 ```
 
 - project_id - Google project id for deploying the TFC Run Task
-- project_viewer - Google project ids to assign viewer IAM role to allow cloud function service account to read project labels.
+- project_viewer - (optional) Google project ids to assign viewer IAM role to allow cloud function service account to read project labels.
+- hmac_key - (optional) HMAC key shared with the TFC Run Task; defaults to `secret`, so override it for real deployments.
+- region - (optional) defaults to `europe-west1`.
 
-Navigate to the `terraform` folder in the terminal and execute the commands below to deploy the Google Cloud resources.
+From the repository root, execute the commands below to deploy the Google Cloud resources.
 ```bash
 task init
-task plan
-task apply
+task terraform:plan
+task terraform:apply
 ```
 or
 ```bash
-task all
+task terraform:all
 ```
 ### Terraform Cloud
 [Terraform Cloud](https://app.terraform.io) Run Task set up is required next. Under `Settings/Run tasks` create a Run Task with the following settings:
@@ -111,7 +114,7 @@ output "userinfo" {
 ## Destroy
 All the resources deployed to the Google Cloud project can be destroyed with the single command below.
 ```bash
-task destroy
+task terraform:destroy
 ```
 
 ## Run Task Development
@@ -120,11 +123,22 @@ The cloud functions for this TFC Run Task are in the folders below:
 - [process](cloud_functions/runtask_process)
 - [request](cloud_functions/runtask_request)
 
-Cloud Function pytests have been created in the folder [cloud_functions/tests](cloud_functions/tests) to aid local development and unit testing.
+Cloud Function pytests have been created in the folder [cloud_functions/tests](cloud_functions/tests) to aid local development and unit testing (`task test:cf`). Tests that read project labels need application-default credentials and a default project (`gcloud config set project <id>`).
 
-Terraform pytests have been created in the folder [tests](tests) to deploy, test and destroy resources.
+Terraform pytests have been created in the folder [tests](tests) to deploy, test and destroy resources (`task test:terraform` - this deploys real resources).
+
+Run `task lint` before committing, and `task --list` for all available tasks.
 
 ## Changelog
+
+### 2026-10-07
+- **chore**: Upgraded Cloud Functions runtime to Python 3.13 and aligned all Python dependency pins
+- **chore**: Upgraded Terraform Google providers to 7.46 and declared archive, http and random providers
+- **chore**: Upgraded GitHub Actions (checkout v7, setup-terraform v4, ubuntu-26.04 runner, Terraform 1.16.5)
+- **chore**: Switched buildpacks builder to google-22
+- **chore**: Updated pre-commit hooks and pinned ruff rule set in ruff.toml
+- **ci**: Added Dependabot for GitHub Actions, pip, Terraform and pre-commit
+- **fix**: Defaulted `project_viewer` to an empty list so plans succeed when it is unset
 
 ### 2026-03-17
 - **feat**: Upgraded dependencies to Python 3.12 and added Task automation

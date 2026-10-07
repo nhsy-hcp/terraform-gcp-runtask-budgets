@@ -18,7 +18,7 @@ resource "google_cloudfunctions2_function" "runtask_request" {
   location    = var.region
 
   build_config {
-    runtime     = "python311"
+    runtime     = "python313"
     entry_point = "request_handler"
     source {
       storage_source {

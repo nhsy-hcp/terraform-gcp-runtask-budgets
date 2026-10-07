@@ -50,7 +50,6 @@ terraform.tfvars
 # Tests (kept as per user preference)
 cloud_functions/*/tests
 
-AGENTS.md
 .bob/
 .plans/
 .tmp/

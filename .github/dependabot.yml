@@ -1,0 +1,40 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "pip"
+    directories:
+      - "/cloud_functions/runtask_callback"
+      - "/cloud_functions/runtask_echo"
+      - "/cloud_functions/runtask_process"
+      - "/cloud_functions/runtask_request"
+      - "/cloud_functions/tests"
+      - "/tests"
+    schedule:
+      interval: "weekly"
+    groups:
+      python:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    schedule:
+      interval: "weekly"
+    groups:
+      terraform:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      pre-commit:
+        update-types: ["minor", "patch"]
