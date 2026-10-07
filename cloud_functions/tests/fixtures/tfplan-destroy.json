@@ -1,0 +1,36 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.10.0",
+  "variables": {
+    "project_id": {
+      "value": "example-project-var"
+    }
+  },
+  "resource_changes": [
+    {
+      "address": "google_storage_bucket.example",
+      "change": {
+        "actions": ["delete"]
+      }
+    },
+    {
+      "address": "google_service_account.example",
+      "change": {
+        "actions": ["delete"]
+      }
+    }
+  ],
+  "configuration": {
+    "provider_config": {
+      "google": {
+        "name": "google",
+        "full_name": "registry.terraform.io/hashicorp/google",
+        "expressions": {
+          "project": {
+            "references": ["var.project_id"]
+          }
+        }
+      }
+    }
+  }
+}
