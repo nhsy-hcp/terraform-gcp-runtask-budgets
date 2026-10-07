@@ -53,3 +53,7 @@ cloud_functions/*/tests
 .bob/
 .plans/
 .tmp/
+
+# Coverage
+.coverage
+htmlcov/

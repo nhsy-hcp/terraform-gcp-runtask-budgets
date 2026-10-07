@@ -12,10 +12,13 @@ All automation runs through `Taskfile.yml` (`task --list` shows everything).
 
 ### Setup & Quality
 ```bash
-task init     # venv, Python deps, pre-commit hooks, terraform init
-task lint     # pre-commit (gitleaks, shellcheck, ruff, yamllint) + terraform fmt/validate
-task test:ci  # lint + all tests
+task init      # venv, Python deps, pre-commit hooks, terraform init
+task lint      # pre-commit (gitleaks, shellcheck, ruff, yamllint) + terraform fmt/validate
+task test:cov  # cloud function tests with coverage, fails below 80% (COV_MIN=<n> to override)
+task test:ci   # lint + all tests
 ```
+
+**Before every commit**, run `task lint` and `task test:cov`; both must pass.
 
 ### Cloud Functions Development
 ```bash
@@ -28,9 +31,10 @@ Each `cloud_functions/runtask_*` directory also has a Makefile (`make run|build|
 ### Testing
 ```bash
 task test:cf         # Cloud function unit tests (cloud_functions/tests)
+task test:cov        # Same tests with coverage report; minimum 80% (COV_MIN=<n> to override)
 task test:terraform  # Infrastructure tests (tests/) - DEPLOYS real resources, then destroys
 ```
-Some `test:cf` tests call the Resource Manager API and need valid ADC (`gcloud auth application-default login`) plus a default project (`gcloud config set project <id>` or `GOOGLE_CLOUD_PROJECT`).
+Some `test:cf`/`test:cov` tests call the Resource Manager API and need valid ADC (`gcloud auth application-default login`) plus a default project (`gcloud config set project <id>` or `GOOGLE_CLOUD_PROJECT`).
 
 ### Terraform Infrastructure
 ```bash
@@ -90,7 +94,7 @@ project_viewer = ["__BUDGET_GOOGLE_PROJECT__"] # optional, defaults to []
 
 - Python deps use exact `==` pins, kept identical across all `requirements.txt` files; Dependabot (`.github/dependabot.yml`) raises weekly PRs for pip, Terraform, GitHub Actions and pre-commit.
 - `ruff.toml` pins the lint rule set to `E4, E7, E9, F`; broaden it in a dedicated cleanup change.
-- `AGENTS.md` and `.terraform.lock.hcl` are gitignored.
+- `.terraform.lock.hcl` is gitignored.
 
 ## Key Behaviors
 
