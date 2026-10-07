@@ -88,11 +88,11 @@ project_viewer = ["__BUDGET_GOOGLE_PROJECT__"] # optional, defaults to []
 - **Flask 3.1.x** / functions-framework 3.x for HTTP handling
 - **Terraform 1.10+**; Google providers `~> 7.46`
 - **Google Cloud SDK** with authenticated credentials
-- **Task** and **pre-commit**; `pack` CLI for buildpacks builds (`gcr.io/buildpacks/builder:google-22`)
+- **Task**, **pre-commit** and a local **shellcheck** binary (used by the pre-commit hook); `pack` CLI for buildpacks builds (`gcr.io/buildpacks/builder:google-22`)
 
 ## Conventions
 
-- Python deps use exact `==` pins, kept identical across all `requirements.txt` files; Dependabot (`.github/dependabot.yml`) raises weekly PRs for pip, Terraform, GitHub Actions and pre-commit.
+- Python deps use exact `==` pins, kept identical across all `requirements.txt` files; Dependabot (`.github/dependabot.yml`) raises weekly minor/patch PRs for pip, Terraform, GitHub Actions and pre-commit; major upgrades are ignored and done manually.
 - `ruff.toml` pins the lint rule set to `E4, E7, E9, F`; broaden it in a dedicated cleanup change.
 - `.terraform.lock.hcl` is gitignored.
 
