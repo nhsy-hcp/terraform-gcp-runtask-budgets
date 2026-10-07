@@ -27,11 +27,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Skipped in CI: GoogleProject tests need GCP credentials;
-      # terraformplan tests need gitignored local plan fixtures
+      # Tests marked gcp call real Google APIs and need credentials;
+      # coverage minimum is set in cloud_functions/tests/.coveragerc
       - name: Pytest
-        run: >-
-          pytest -v --tb=short
-          --ignore=test_runtask_process_projects.py
-          --ignore=test_runtask_process_terraformplan.py
-          --deselect=test_runtask_process.py::test_validate_projects_ids
+        run: pytest -v --tb=short -m "not gcp" --cov --cov-report=term-missing

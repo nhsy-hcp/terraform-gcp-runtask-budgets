@@ -96,6 +96,7 @@ project_viewer = ["__BUDGET_GOOGLE_PROJECT__"] # optional, defaults to []
 ## Conventions
 
 - Python deps use exact `==` pins, kept identical across all `requirements.txt` files; Dependabot (`.github/dependabot.yml`) raises weekly minor/patch PRs for pip, Terraform, GitHub Actions and pre-commit; major upgrades are ignored and done manually.
+- Coverage minimum (80%) lives in `cloud_functions/tests/.coveragerc` and is enforced by `task test:cov` and the Python CI job (`pytest -m "not gcp" --cov`).
 - `ruff.toml` pins the lint rule set to `E4, E7, E9, F`; broaden it in a dedicated cleanup change.
 - `.terraform.lock.hcl` is gitignored.
 

@@ -1,0 +1,11 @@
+# Coverage settings shared by `task test:cov` and the Python CI workflow
+[run]
+source =
+    runtask_callback
+    runtask_process
+    runtask_request
+
+[report]
+fail_under = 80
+show_missing = True
+skip_empty = True
