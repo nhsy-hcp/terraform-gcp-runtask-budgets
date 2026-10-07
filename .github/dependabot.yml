@@ -5,6 +5,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       github-actions:
         update-types: ["minor", "patch"]
@@ -19,6 +22,9 @@ updates:
       - "/tests"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       python:
         update-types: ["minor", "patch"]
@@ -27,6 +33,9 @@ updates:
     directory: "/terraform"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       terraform:
         update-types: ["minor", "patch"]
@@ -35,6 +44,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       pre-commit:
         update-types: ["minor", "patch"]

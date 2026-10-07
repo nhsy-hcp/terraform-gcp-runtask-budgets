@@ -14,6 +14,7 @@ check_command() {
 check_command python3
 check_command terraform
 check_command gcloud
+check_command shellcheck
 
 if ! command -v pre-commit &> /dev/null; then
     echo "WARNING: pre-commit not found, will install via pip"

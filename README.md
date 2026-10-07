@@ -43,6 +43,7 @@ Pre-requisites for TFC Run Task deployment only:
   - gcloud auth application-default login
   - gcloud auth login
 - [Task](https://taskfile.dev/) (task automation tool)
+- [ShellCheck](https://www.shellcheck.net/) (used by the pre-commit hook)
 - Terraform v1.10+
 - Terraform Cloud account and workspace created
 - Terraform sample deployment to connect to the above workspace
