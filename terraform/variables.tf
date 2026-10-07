@@ -18,5 +18,6 @@ variable "hmac_key" {
 variable "project_viewer" {
   description = "Project ids to assign viewer access for runtask_process cloud function service account"
   type        = list(string)
-  default     = null
+  default     = []
+  nullable    = false
 }

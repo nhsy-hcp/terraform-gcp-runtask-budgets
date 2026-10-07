@@ -18,7 +18,7 @@ resource "google_cloudfunctions2_function" "runtask_callback" {
   location    = var.region
 
   build_config {
-    runtime     = "python311"
+    runtime     = "python313"
     entry_point = "callback_handler"
     source {
       storage_source {

@@ -4,7 +4,7 @@ all: run
 
 build:
 	pack build \
-	 --builder gcr.io/buildpacks/builder:v1 \
+	 --builder gcr.io/buildpacks/builder:google-22 \
 	 --env GOOGLE_FUNCTION_SIGNATURE_TYPE=http \
 	 --env GOOGLE_FUNCTION_TARGET=echo_handler \
 	 runtask_request
@@ -25,7 +25,7 @@ deploy:
 	gcloud functions deploy runtask-echo \
 		--gen2 \
 		--region=europe-west1 \
-		--runtime=python310 \
+		--runtime=python313 \
 		--source=. \
 		--entry-point=echo_handler \
 		--trigger-http \

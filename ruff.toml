@@ -1,0 +1,5 @@
+target-version = "py313"
+
+[lint]
+# Pre-0.16 default rule set; broaden in a dedicated cleanup change.
+select = ["E4", "E7", "E9", "F"]
