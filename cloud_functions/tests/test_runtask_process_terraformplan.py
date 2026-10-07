@@ -51,3 +51,17 @@ def test_validate_plan_destroy(plan_destroy_json):
 
 def test_validate_plan_noop(plan_noop_json):
     assert terraformplan.validate_plan(plan_noop_json) == (True, "noop")
+
+
+@pytest.mark.parametrize(
+    "actions, expected",
+    [
+        ([["no-op"], ["no-op"]], (True, "noop")),
+        ([["no-op"], ["delete"]], (True, "delete: 1")),
+        ([["no-op"], ["create"]], (False, "create: 1")),
+        ([["update"]], (False, "update: 1")),
+    ],
+)
+def test_validate_plan_noop_actions(actions, expected):
+    plan = {"resource_changes": [{"change": {"actions": a}} for a in actions]}
+    assert terraformplan.validate_plan(plan) == expected
