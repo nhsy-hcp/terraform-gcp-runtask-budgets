@@ -29,8 +29,8 @@ Deploys Google Cloud resources for the TFC Run Task.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_hmac_key"></a> [hmac\_key](#input\_hmac\_key) | HMAC key shared with the TFC Run Task for signing requests | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project id for deployment | `string` | n/a | yes |
-| <a name="input_hmac_key"></a> [hmac\_key](#input\_hmac\_key) | HMAC key for signing requests | `string` | `"secret"` | no |
 | <a name="input_project_viewer"></a> [project\_viewer](#input\_project\_viewer) | Project ids to assign viewer access for runtask\_process cloud function service account | `list(string)` | `[]` | no |
 | <a name="input_region"></a> [region](#input\_region) | Region for deployment | `string` | `"europe-west1"` | no |
 

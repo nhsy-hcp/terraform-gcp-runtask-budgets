@@ -63,7 +63,7 @@ hmac_key       = "__RUN_TASK_HMAC_KEY__"
 
 - project_id - Google project id for deploying the TFC Run Task
 - project_viewer - (optional) Google project ids to assign viewer IAM role to allow cloud function service account to read project labels.
-- hmac_key - (optional) HMAC key shared with the TFC Run Task; defaults to `secret`, so override it for real deployments.
+- hmac_key - (required, sensitive) HMAC key shared with the TFC Run Task. Can also be set with the `TF_VAR_hmac_key` environment variable.
 - region - (optional) defaults to `europe-west1`.
 
 From the repository root, execute the commands below to deploy the Google Cloud resources.
