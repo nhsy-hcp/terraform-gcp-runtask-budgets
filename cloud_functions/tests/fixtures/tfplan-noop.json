@@ -1,0 +1,19 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.10.0",
+  "variables": {},
+  "resource_changes": [],
+  "configuration": {
+    "provider_config": {
+      "google": {
+        "name": "google",
+        "full_name": "registry.terraform.io/hashicorp/google",
+        "expressions": {
+          "project": {
+            "constant_value": "example-project-one"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.10.0",
+  "variables": {
+    "project_id": {
+      "value": "example-project-var"
+    },
+    "region": {
+      "value": "europe-west1"
+    }
+  },
+  "resource_changes": [
+    {
+      "address": "data.http.example",
+      "change": {
+        "actions": ["read"]
+      }
+    },
+    {
+      "address": "google_storage_bucket.example",
+      "change": {
+        "actions": ["create"]
+      }
+    },
+    {
+      "address": "google_service_account.example",
+      "change": {
+        "actions": ["create"]
+      }
+    },
+    {
+      "address": "google_project_iam_member.example",
+      "change": {
+        "actions": ["delete", "create"]
+      }
+    }
+  ],
+  "configuration": {
+    "provider_config": {
+      "archive": {
+        "name": "archive",
+        "full_name": "registry.terraform.io/hashicorp/archive"
+      },
+      "google": {
+        "name": "google",
+        "full_name": "registry.terraform.io/hashicorp/google",
+        "expressions": {
+          "project": {
+            "references": ["var.project_id"]
+          }
+        }
+      },
+      "google-beta": {
+        "name": "google-beta",
+        "full_name": "registry.terraform.io/hashicorp/google-beta",
+        "expressions": {
+          "project": {
+            "references": ["var.project_id"]
+          }
+        }
+      },
+      "google.one": {
+        "name": "google",
+        "full_name": "registry.terraform.io/hashicorp/google",
+        "alias": "one",
+        "expressions": {
+          "project": {
+            "constant_value": "example-project-one"
+          }
+        }
+      },
+      "google-beta.two": {
+        "name": "google-beta",
+        "full_name": "registry.terraform.io/hashicorp/google-beta",
+        "alias": "two",
+        "expressions": {
+          "project": {
+            "constant_value": "example-project-two"
+          }
+        }
+      }
+    }
+  }
+}

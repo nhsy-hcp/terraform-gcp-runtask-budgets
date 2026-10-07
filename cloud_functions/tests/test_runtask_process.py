@@ -38,8 +38,38 @@ def test_process_handler_missing_payload():
     )
 
 
+@pytest.mark.gcp
 def test_validate_projects_ids(proj):
     validate_result, validate_message = main.__validate_project_ids(
         [proj.project.project_id]
     )
     assert validate_result in [True, False]
+
+
+@pytest.mark.parametrize(
+    "project_ids, expected",
+    [
+        (
+            ["example-project-enabled", "example-project-other-label"],
+            (
+                True,
+                "TFC deployments enabled: "
+                "example-project-enabled, example-project-other-label",
+            ),
+        ),
+        (
+            ["example-project-enabled", "example-project-disabled"],
+            (False, "TFC deployments disabled: example-project-disabled"),
+        ),
+        (
+            ["example-project-disabled-upper"],
+            (False, "TFC deployments disabled: example-project-disabled-upper"),
+        ),
+        (
+            ["example-project-unknown"],
+            (False, "Google project label lookup failed: example-project-unknown"),
+        ),
+    ],
+)
+def test_validate_projects_ids_mocked(mock_gcp, project_ids, expected):
+    assert main.__validate_project_ids(project_ids) == expected

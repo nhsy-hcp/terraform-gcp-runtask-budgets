@@ -34,7 +34,10 @@ task test:cf         # Cloud function unit tests (cloud_functions/tests)
 task test:cov        # Same tests with coverage report; minimum 80% (COV_MIN=<n> to override)
 task test:terraform  # Infrastructure tests (tests/) - DEPLOYS real resources, then destroys
 ```
-Some `test:cf`/`test:cov` tests call the Resource Manager API and need valid ADC (`gcloud auth application-default login`) plus a default project (`gcloud config set project <id>` or `GOOGLE_CLOUD_PROJECT`).
+Tests marked `@pytest.mark.gcp` call the real Resource Manager API and need valid ADC (`gcloud auth application-default login`) plus a default project (`gcloud config set project <id>` or `GOOGLE_CLOUD_PROJECT`). Run `pytest -m "not gcp"` in `cloud_functions/tests` for a credential-free run.
+
+- `cloud_functions/tests/conftest.py`: `mock_gcp` fixture (fakes `google.auth.default` and the Resource Manager client) and `load_fixture` helper.
+- `cloud_functions/tests/fixtures/`: synthetic Terraform plan JSON with `example-project-*` placeholders. Never commit real plans or payloads; they contain tokens, org names and variable values.
 
 ### Terraform Infrastructure
 ```bash
