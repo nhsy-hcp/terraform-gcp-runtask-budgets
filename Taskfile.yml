@@ -119,6 +119,18 @@ tasks:
       - echo "Running cloud functions tests..."
       - "{{.PYTEST}} -v --tb=short"
 
+  test:cov:
+    desc: "Run cloud functions tests with coverage (usage: task test:cov COV_MIN=80)"
+    dir: cloud_functions/tests
+    vars:
+      COV_MIN: '{{.COV_MIN | default "80"}}'
+    cmds:
+      - echo "Running cloud functions tests with coverage (min {{.COV_MIN}}%)..."
+      - >-
+        {{.PYTEST}} --tb=short
+        --cov=runtask_callback --cov=runtask_process --cov=runtask_request
+        --cov-report=term-missing --cov-fail-under={{.COV_MIN}}
+
   test:terraform:
     desc: "Run terraform infrastructure tests"
     dir: tests

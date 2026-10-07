@@ -138,6 +138,7 @@ Run `task lint` before committing, and `task --list` for all available tasks.
 - **chore**: Switched buildpacks builder to google-22
 - **chore**: Updated pre-commit hooks and pinned ruff rule set in ruff.toml
 - **ci**: Added Dependabot for GitHub Actions, pip, Terraform and pre-commit
+- **ci**: Added Python workflow running cloud function pytests (GCP-dependent tests skipped)
 - **fix**: Defaulted `project_viewer` to an empty list so plans succeed when it is unset
 
 ### 2026-03-17

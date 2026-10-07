@@ -1,0 +1,37 @@
+name: "Python"
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  pytest:
+    name: "Pytest"
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: cloud_functions/tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Python setup
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: ".python-version"
+          cache: "pip"
+          cache-dependency-path: "cloud_functions/tests/requirements.txt"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Skipped in CI: GoogleProject tests need GCP credentials;
+      # terraformplan tests need gitignored local plan fixtures
+      - name: Pytest
+        run: >-
+          pytest -v --tb=short
+          --ignore=test_runtask_process_projects.py
+          --ignore=test_runtask_process_terraformplan.py
+          --deselect=test_runtask_process.py::test_validate_projects_ids
