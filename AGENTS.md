@@ -81,8 +81,8 @@ Configure in `terraform/terraform.tfvars`:
 ```hcl
 project_id     = "__DEPLOYMENT_GOOGLE_PROJECT__"
 project_viewer = ["__BUDGET_GOOGLE_PROJECT__"] # optional, defaults to []
+hmac_key       = "__RUN_TASK_HMAC_KEY__"     # required, sensitive (or TF_VAR_hmac_key)
 # region   = "europe-west1" (default)
-# hmac_key = "secret" (default - override for real deployments)
 ```
 
 ## Dependencies

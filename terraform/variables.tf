@@ -10,9 +10,9 @@ variable "region" {
 }
 
 variable "hmac_key" {
-  description = "HMAC key for signing requests"
+  description = "HMAC key shared with the TFC Run Task for signing requests"
   type        = string
-  default     = "secret"
+  sensitive   = true
 }
 
 variable "project_viewer" {
