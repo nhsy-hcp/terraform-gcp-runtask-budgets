@@ -99,7 +99,9 @@ def request_handler(request):
                         logging.error(f"{http_code} - {http_message}: {e}")
                 else:
                     http_message = "HMAC signature invalid"
-                    logging.warning(message)
+                    logging.warning(http_message)
+            else:
+                http_message = message
         else:
             http_code = 200
             http_message = "Payload missing in request"

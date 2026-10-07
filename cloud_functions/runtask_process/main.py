@@ -146,6 +146,9 @@ def __get_project_ids(plan_json: dict) -> (List[str], str):
         logging.warning("Warning: {}".format(e))
         message = "TFC plan parse failed"
 
+    if not project_ids and not message:
+        message = "No Google project ids found in TFC plan"
+
     return project_ids, message
 
 
@@ -158,6 +161,9 @@ def __get_plan_json(access_token: str, plan_json_api_url: str) -> (dict, str):
         # logging.info("plan_json: " + str(plan_json))
     except Exception as e:
         logging.warning("Warning: {}".format(e))
+
+    # Download errors and non-200 responses both leave an empty plan
+    if not plan_json:
         message = "TFC plan download failed"
 
     return plan_json, message

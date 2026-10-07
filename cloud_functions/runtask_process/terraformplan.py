@@ -18,6 +18,8 @@ def validate_plan(plan_json: dict) -> (bool, str):
     matches = [match.value for match in parse(jsonpath_expression).find(plan_json)]
     # print("matches: {}".format(matches))
     resources = __list_to_dict_with_counts(matches)
+    # Unchanged resources are listed with a "no-op" action and are not changes
+    resources.pop("no-op", None)
     # print("resources: {}".format(resources))
     # print("plan_json: {}".format(plan_json))
     message = []

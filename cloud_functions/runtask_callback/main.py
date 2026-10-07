@@ -54,6 +54,9 @@ def callback_handler(request):
 
                 http_message = "OK"
                 http_code = 200
+            else:
+                http_message = message
+                http_code = 422
         else:
             http_message = "Payload missing in request"
             http_code = 422
