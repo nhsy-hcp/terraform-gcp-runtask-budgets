@@ -4,9 +4,9 @@ google-cloud-error-reporting==1.17.0
 google-cloud-logging==3.17.0
 google-cloud-resource-manager==1.19.0
 google-cloud-workflows==1.24.0
-jsonpath-ng==1.9.1
+jsonpath-ng==1.10.0
 requests==2.34.2
 requests-mock==1.12.1
 pytest==9.1.1
 pytest-cov==7.1.0
-pytest-env==1.7.1
+pytest-env==1.8.0
