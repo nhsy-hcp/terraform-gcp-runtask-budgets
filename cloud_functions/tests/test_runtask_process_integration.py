@@ -1,5 +1,5 @@
 import os
-# import sys
+import sys
 # sys.path.insert(0, f"{os.path.dirname(__file__)}/../runtask_process")
 
 import subprocess
@@ -13,7 +13,15 @@ def test_process_integration():
     )  # Each functions framework instance needs a unique port
 
     process = subprocess.Popen(
-        ["functions-framework", "--target", "process_handler", "--port", str(port)],
+        [
+            sys.executable,
+            "-m",
+            "functions_framework",
+            "--target",
+            "process_handler",
+            "--port",
+            str(port),
+        ],
         cwd=f"{os.path.dirname(__file__)}/../runtask_process",
         stdout=subprocess.PIPE,
         env=os.environ,
