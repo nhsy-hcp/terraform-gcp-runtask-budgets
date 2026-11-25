@@ -1,2 +1,2 @@
-pytest-env==1.8.5
+pytest-env==1.8.7
 tftest==1.8.8
